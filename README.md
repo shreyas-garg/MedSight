@@ -17,7 +17,7 @@ MedSight is a modern web application that helps patients understand their medica
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **AI**: Google Generative AI (Gemini)
+* **AI**: Google Generative AI (Gemini)
 - **Icons**: Google Material Symbols
 - **Font**: Inter (Google Fonts)
 
@@ -158,11 +158,11 @@ colors: {
 
 ### Gemini Model
 
-You can change the Gemini model in `app/api/analyze-report/route.ts`:
+The server will first try the `gemini-3-flash-preview` model and automatically fall back to `gemini-1.5-flash` if your key doesn't have permissions for the preview model.  You can still change the model manually in `app/api/analyze-report/route.ts`:
 
 ```typescript
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-// or use 'gemini-1.5-pro' for more advanced analysis
+let model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
+// …or pick another such as 'gemini-1.5-flash' or 'gemini-1.5-pro'
 ```
 
 ## Build for Production
@@ -195,7 +195,7 @@ npm start
 
 ## Supported File Types
 
-- **PDF**: `.pdf`
+- **PDF**: `.pdf` (sent directly to the AI model; no local parsing required)
 - **Images**: `.png`, `.jpg`, `.jpeg`
 - **Max Size**: 10MB per file
 

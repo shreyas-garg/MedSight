@@ -41,21 +41,11 @@ export async function POST(request: NextRequest) {
 
     console.log('Processing file:', { name: file.name, type: mimeType, size: file.size })
 
-    // For PDFs, we need to inform user they should convert to image
-    // Free tier doesn't support PDF analysis well
-    if (mimeType === 'application/pdf') {
-      return NextResponse.json({
-        error: 'PDF analysis requires conversion',
-        message: 'Please convert your PDF to a PNG or JPG image and try again.',
-        suggestion: 'You can screenshot the relevant pages or use a free PDF-to-image converter.'
-      }, { status: 400 })
-    }
+    // Initialize Gemini model - start with preview model but fall back if unavailable
+    let model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
-    // Initialize Gemini model - try gemini-1.5-flash (most common free tier model)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
-
-    // Create a detailed prompt for medical report analysis
-    const prompt = `You are a medical assistant AI. Analyze the medical report in the image/document provided and provide a comprehensive summary in the following JSON format:
+    // Build prompt for the report (PDF or image) and send file content
+    const prompt = `You are a medical assistant AI. Analyze the medical report in the provided file and provide a comprehensive summary in the following JSON format:
 
 {
   "patientName": "Alex Rivera",
@@ -123,7 +113,6 @@ export async function POST(request: NextRequest) {
 
 Generate a similar comprehensive medical report analysis. Respond ONLY with the JSON object, no other text.`
 
-    // Generate content with the image/document
     const imagePart = {
       inlineData: {
         data: base64Data,
@@ -131,7 +120,24 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
       }
     }
 
-    const result = await model.generateContent([prompt, imagePart])
+    let result
+    try {
+      result = await model.generateContent([prompt, imagePart])
+    } catch (firstErr: any) {
+      console.warn('First generation attempt failed', firstErr.message)
+      // if failure seems related to unavailable model, try a smaller one
+      if (firstErr.message?.toLowerCase().includes('model')) {
+        try {
+          model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+          result = await model.generateContent([prompt, imagePart])
+        } catch (secondErr: any) {
+          // propagate original error if fallback also fails
+          throw secondErr
+        }
+      } else {
+        throw firstErr
+      }
+    }
 
     const response = result.response
     const text = response.text()
@@ -191,7 +197,7 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
     } else if (error.message?.includes('quota') || error.message?.includes('limit')) {
       errorMessage = 'API quota exceeded. Please try again later or upgrade your API plan.'
     } else if (error.message?.includes('model')) {
-      errorMessage = 'Model not available. Please check your API key permissions.'
+      errorMessage = 'Model not available or not permitted for your key. Please verify that your API key has access to the selected Gemini model or switch to a different model.'
     }
     
     return NextResponse.json(
