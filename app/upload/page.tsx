@@ -60,6 +60,15 @@ export default function UploadPage() {
       // Store the analysis data in sessionStorage for the dashboard
       sessionStorage.setItem('reportAnalysis', JSON.stringify(data))
       
+      // Also append this report to localStorage so health profile can read history
+      try {
+        const existing = JSON.parse(localStorage.getItem('healthReports') || '[]')
+        existing.push(data)
+        localStorage.setItem('healthReports', JSON.stringify(existing))
+      } catch (e) {
+        console.warn('Unable to save to healthReports localStorage', e)
+      }
+
       // Navigate to dashboard
       router.push('/dashboard')
     } catch (err: any) {
