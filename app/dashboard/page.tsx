@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { importPDF } from '../../utils/pdf'
 
 interface TestResult {
   testName: string
@@ -248,11 +249,13 @@ export default function DashboardPage() {
                 <p className="text-stone-500 mt-1">Generated on {new Date().toLocaleDateString()} • {displayAnalysis.reportType}</p>
               </div>
               <div className="flex gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-lg border border-stone-200 hover:bg-stone-200 transition-colors text-sm">
-                  <span className="material-symbols-outlined text-lg">download</span>
-                  Download PDF
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary text-background-dark font-bold rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all text-sm">
+                <button
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-background-dark font-bold rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all text-sm"
+                  onClick={async () => {
+                    const mod = await import('../../utils/pdf');
+                    mod.generateSummaryPDF(displayAnalysis, (displayFileName || 'MedSight_Summary') + '.pdf');
+                  }}
+                >
                   <span className="material-symbols-outlined text-lg">share</span>
                   Share with Doctor
                 </button>
@@ -316,15 +319,7 @@ export default function DashboardPage() {
                 </div>
               </section>
 
-              {/* Disclaimer */}
-              <footer className="pt-8 border-t border-stone-100">
-                <div className="flex gap-4 p-4 bg-stone-50 rounded-lg">
-                  <span className="material-symbols-outlined text-stone-400 text-xl shrink-0">lock</span>
-                  <p className="text-[11px] text-stone-400 leading-relaxed italic">
-                    Disclaimer: MedSight is an AI tool for informational purposes only. It is not a medical professional. Always consult with your doctor before making any healthcare decisions. Your medical data is encrypted and stored securely.
-                  </p>
-                </div>
-              </footer>
+              {/* Disclaimer removed */}
             </div>
           </div>
         </div>
