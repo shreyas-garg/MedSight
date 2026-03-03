@@ -31,10 +31,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="flex flex-col gap-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 w-fit">
-                <span className="material-symbols-outlined text-primary text-sm">verified_user</span>
-                <span className="text-xs font-bold text-sage-custom uppercase tracking-wider">Trusted by 50,000+ patients</span>
-              </div>
+              {/* Trust badge removed */}
               <h1 className="text-5xl lg:text-7xl font-black tracking-tight leading-[1.1] text-background-dark dark:text-white">
                 Be OPD ready <br />
                 <span className="text-primary italic">before</span> you step in
@@ -56,17 +53,7 @@ export default function HomePage() {
                   </button>
                 </Link>
               </div>
-              <div className="flex items-center gap-6 pt-6 border-t border-slate-200 dark:border-slate-800">
-                <div className="flex flex-col">
-                  <span className="text-2xl font-bold text-background-dark dark:text-white">HIPAA</span>
-                  <span className="text-xs font-medium text-slate-custom uppercase">Compliant</span>
-                </div>
-                <div className="h-10 w-px bg-slate-200 dark:bg-slate-800"></div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-bold text-background-dark dark:text-white">AES-256</span>
-                  <span className="text-xs font-medium text-slate-custom uppercase">Encrypted</span>
-                </div>
-              </div>
+              {/* Compliance/Encryption badges removed */}
             </div>
 
             {/* Visual Element: Report UI Mockup */}
@@ -241,7 +228,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-slate-100 dark:border-slate-900 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-xs text-slate-custom dark:text-slate-500">© 2024 MedSight Technologies Inc. All rights reserved.</p>
+          {/* Copyright removed */}
           <div className="flex items-center gap-6">
             <a className="text-slate-custom hover:text-primary" href="#"><span className="material-symbols-outlined">public</span></a>
             <a className="text-slate-custom hover:text-primary" href="#"><span className="material-symbols-outlined">mail</span></a>

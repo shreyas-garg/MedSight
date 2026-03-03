@@ -60,6 +60,15 @@ export default function UploadPage() {
       // Store the analysis data in sessionStorage for the dashboard
       sessionStorage.setItem('reportAnalysis', JSON.stringify(data))
       
+      // Also append this report to localStorage so health profile can read history
+      try {
+        const existing = JSON.parse(localStorage.getItem('healthReports') || '[]')
+        existing.push(data)
+        localStorage.setItem('healthReports', JSON.stringify(existing))
+      } catch (e) {
+        console.warn('Unable to save to healthReports localStorage', e)
+      }
+
       // Navigate to dashboard
       router.push('/dashboard')
     } catch (err: any) {
@@ -200,15 +209,7 @@ export default function UploadPage() {
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-          <div className="bg-white p-6 rounded-xl border border-slate-200">
-            <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-              <span className="material-symbols-outlined text-2xl">lock</span>
-            </div>
-            <h4 className="font-bold text-background-dark mb-2">100% Private</h4>
-            <p className="text-sm text-slate-custom">
-              Your reports are encrypted and never stored permanently
-            </p>
-          </div>
+          {/* Privacy/encryption info card removed */}
           
           <div className="bg-white p-6 rounded-xl border border-slate-200">
             <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
