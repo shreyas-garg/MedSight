@@ -158,7 +158,7 @@ colors: {
 
 ### Gemini Model
 
-The server will first try the `gemini-3-flash-preview` model and automatically fall back to `gemini-1.5-flash` if your key doesn't have permissions for the preview model.  You can still change the model manually in `app/api/analyze-report/route.ts`:
+The server will first try the `gemini-2.5-flash` model, if your key doesn't have permissions for the preview model.  You can still change the model manually in `app/api/analyze-report/route.ts`:
 
 ```typescript
 let model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
