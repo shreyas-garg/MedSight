@@ -23,5 +23,12 @@ export async function POST(request: NextRequest) {
     data: { doctorId },
   })
 
+  // Reports uploaded before this patient had a doctor connected were saved
+  // with no doctor attached — route those into the newly connected doctor's queue.
+  await prisma.report.updateMany({
+    where: { patientId: user.id, doctorId: null },
+    data: { doctorId },
+  })
+
   return NextResponse.json({ success: true, doctor: { id: doctor.id, name: doctor.name } })
 }
