@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import LogoutButton from '@/components/LogoutButton'
+import DoctorReportsList from '@/components/DoctorReportsList'
 
 export default async function DoctorDashboard() {
   const user = await getCurrentUser()
@@ -23,15 +24,21 @@ export default async function DoctorDashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-16">
-        <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
-          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-outlined text-3xl text-primary">stethoscope</span>
+      <main className="max-w-3xl mx-auto px-6 py-16 flex flex-col gap-8">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-2xl text-primary">stethoscope</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-background-dark">Welcome, Dr. {user.name}</h2>
+              <p className="text-sm text-slate-custom">Review your patients&apos; reports and send feedback.</p>
+            </div>
           </div>
-          <h2 className="text-3xl font-black text-background-dark mb-2">Welcome, Dr. {user.name}</h2>
-          <p className="text-slate-custom">
-            Your doctor dashboard is coming together — pending patient reviews, patient history, and analytics will land here next.
-          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-8">
+          <DoctorReportsList />
         </div>
       </main>
     </div>
