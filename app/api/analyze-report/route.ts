@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     console.log('Processing file:', { name: file.name, type: mimeType, size: file.size })
 
     // Initialize Gemini model - start with preview model but fall back if unavailable
-    let model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    let model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' })
 
     // Build prompt for the report (PDF or image) and send file content
     const prompt = `You are a medical assistant AI. Analyze the medical report in the provided file and provide a comprehensive summary in the following JSON format:
@@ -125,14 +125,20 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
       result = await model.generateContent([prompt, imagePart])
     } catch (firstErr: any) {
       console.warn('First generation attempt failed', firstErr.message)
-      // if failure seems related to unavailable model, try a smaller one
+      // if failure seems related to unavailable model, try fallback models
       if (firstErr.message?.toLowerCase().includes('model')) {
         try {
           model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
           result = await model.generateContent([prompt, imagePart])
         } catch (secondErr: any) {
-          // propagate original error if fallback also fails
-          throw secondErr
+          console.warn('Second generation attempt failed', secondErr.message)
+          try {
+            model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+            result = await model.generateContent([prompt, imagePart])
+          } catch (thirdErr: any) {
+            // propagate original error if all fallbacks fail
+            throw thirdErr
+          }
         }
       } else {
         throw firstErr
@@ -154,7 +160,7 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
       // If parsing fails, return sample data
       analysisData = {
         patientName: "Sample Patient",
-        reportDate: new Date().toLocaleDateString(),
+        reportDate: new Date().toLocaleDateString('en-US'),
         reportType: "Medical Report",
         keyFindings: [
           {
