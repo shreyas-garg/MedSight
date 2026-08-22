@@ -246,7 +246,7 @@ export default function DashboardPage() {
                   <span>AI Powered Analysis</span>
                 </div>
                 <h2 className="text-3xl font-black tracking-tight text-background-dark">MedSight Summary</h2>
-                <p className="text-stone-500 mt-1">Generated on {new Date().toLocaleDateString()} • {displayAnalysis.reportType}</p>
+                <p className="text-stone-500 mt-1">Generated on {new Date().toLocaleDateString('en-US')} • {displayAnalysis.reportType}</p>
               </div>
               <div className="flex gap-2">
                 <button

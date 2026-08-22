@@ -18,10 +18,14 @@ export default function HomePage() {
             <a className="text-sm font-semibold text-slate-custom hover:text-primary transition-colors" href="#">Pricing</a>
           </div>
           <div className="flex items-center gap-4">
-            <button className="hidden sm:block text-sm font-bold text-slate-custom hover:text-background-dark transition-colors px-4">Log in</button>
-            <button className="bg-primary text-background-dark px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-              Get Started
-            </button>
+            <Link href="/login">
+              <button className="hidden sm:block text-sm font-bold text-slate-custom hover:text-background-dark transition-colors px-4">Log in</button>
+            </Link>
+            <Link href="/signup">
+              <button className="bg-primary text-background-dark px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                Get Started
+              </button>
+            </Link>
           </div>
         </div>
       </nav>
