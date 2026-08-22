@@ -17,6 +17,11 @@ enum Role {
   DOCTOR
 }
 
+enum ReportStatus {
+  PENDING
+  REVIEWED
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
@@ -25,6 +30,14 @@ model User {
   role         Role
   createdAt    DateTime  @default(now())
   sessions     Session[]
+
+  // Set only when role = PATIENT: the patient's assigned doctor.
+  doctorId String?
+  doctor   User?   @relation("DoctorPatients", fields: [doctorId], references: [id])
+  patients User[]  @relation("DoctorPatients")
+
+  reportsAsPatient Report[] @relation("PatientReports")
+  reportsAsDoctor  Report[] @relation("DoctorReports")
 }
 
 model Session {
@@ -34,4 +47,19 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  patientId    String
+  patient      User         @relation("PatientReports", fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId     String?
+  doctor       User?        @relation("DoctorReports", fields: [doctorId], references: [id])
+  fileName     String
+  fileSize     Int
+  analysisJson String
+  status       ReportStatus @default(PENDING)
+  feedback     String?
+  reviewedAt   DateTime?
+  createdAt    DateTime     @default(now())
 }

@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/auth'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
@@ -178,6 +180,20 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
         ],
         summary: "The AI had difficulty reading the report. Please try uploading a clearer image or contact support."
       }
+    }
+
+    // If a patient is logged in, persist the report so their doctor can review it
+    const user = await getCurrentUser()
+    if (user && user.role === 'PATIENT') {
+      await prisma.report.create({
+        data: {
+          patientId: user.id,
+          doctorId: user.doctorId,
+          fileName: file.name,
+          fileSize: file.size,
+          analysisJson: JSON.stringify(analysisData),
+        },
+      })
     }
 
     // Return the analysis
