@@ -7,44 +7,82 @@
 npm install
 ```
 
+Prisma and `better-sqlite3` need their install scripts to run. If npm reports them as blocked:
+
+```bash
+npm install-scripts approve prisma @prisma/engines better-sqlite3
+npm rebuild prisma @prisma/engines better-sqlite3
+```
+
 ### Step 2: Get Your Gemini API Key
 
-1. Go to **[Google AI Studio](https://makersuite.google.com/app/apikey)**
+1. Go to **[Google AI Studio](https://aistudio.google.com/app/apikey)**
 2. Sign in with your Google account
-3. Click **"Create API Key"** or **"Get API Key"**
-4. Copy the generated key (it looks like: `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`)
+3. Click **"Create API Key"**
+4. Copy the generated key
+
+New keys start with `AQ.` — Google retired the older `AIzaSy…` format in 2026, so an `AQ.` key
+is expected and correct.
 
 ### Step 3: Add Your API Key
 
-1. Open the file `.env.local` in the root folder of the project
-2. Replace `your_gemini_api_key_here` with your actual API key:
+Create a file named `.env.local` in the root folder with:
 
 ```bash
-GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+GEMINI_API_KEY=your_key_here
 ```
 
-3. Save the file
+`.env` already has the database URL (`DATABASE_URL="file:./dev.db"`), so you don't need to
+change it.
 
-### Step 4: Run the Application
+### Step 4: Set Up the Database
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+This creates `dev.db` with the tables for users, reports, and rehab tasks.
+
+### Step 5: Run the Application
 ```bash
 npm run dev
 ```
 
-### Step 5: Open Your Browser
-Go to: **http://localhost:3000**
+### Step 6: Open Your Browser
+Go to **http://localhost:3000**
 
 ---
 
 ## 📝 How to Use MedSight
 
-1. **Landing Page** - Click "Upload Report" or "Get Started"
-2. **Upload Page** - Drag and drop your medical report (PDF or image)
-3. **Click "Analyze with AI"** - Wait 10-30 seconds for analysis
-4. **View Dashboard** - See your report summary with:
-   - Key findings explained in simple terms
-   - Test results breakdown
-   - Medication recommendations
-   - Suggested questions for your doctor
+MedSight has two roles, so create one account of each to see the whole flow.
+
+### 1. Create a doctor account
+**Sign up** → choose **I'm a Doctor** → you land on the doctor dashboard.
+
+### 2. Create a patient account
+Log out, **Sign up** again → choose **I'm a Patient**.
+
+### 3. Connect the patient to the doctor
+On the patient dashboard, under **Connect with a doctor**, search by name or email and pick
+your doctor. (You can change this later with **Change doctor**.)
+
+### 4. Upload a report
+**Upload** → drag in a PDF or image → **Analyze with AI**. Analysis takes 30–60 seconds.
+You'll land on the dashboard showing the original document beside the AI summary, plus a
+banner confirming it was sent to your doctor.
+
+### 5. Review it as the doctor
+Log back in as the doctor. The dashboard shows a **pending reviews** count, the AI summary,
+and a **View original document** link. Click **Give feedback** and send a note.
+
+### 6. See the feedback as the patient
+Log back in as the patient — the feedback appears on your dashboard and in **Health Profile**.
+
+### 7. Try the extras
+- **Patient History** (doctor) — pick a patient for a visit timeline, trend charts for test
+  values with 2+ readings, and rehab task assignment
+- **Daily Rehabilitation** (patient) — check off assigned tasks and build a streak
 
 ---
 
@@ -58,24 +96,35 @@ Go to: **http://localhost:3000**
 
 ## ⚠️ Troubleshooting
 
+### Error: "You must be logged in as a patient to upload a report"
+Uploading requires a signed-in **patient** account. Doctor accounts get redirected to their
+own dashboard.
+
 ### Error: "Gemini API key not configured"
-- Make sure `.env.local` file exists in the root folder
-- Check that you've pasted your API key correctly
-- Restart the dev server: Stop it (Ctrl+C) and run `npm run dev` again
+- Make sure `.env.local` exists in the root folder and contains `GEMINI_API_KEY`
+- Restart the dev server (Ctrl+C, then `npm run dev`) — env files are only read at startup
+
+### Error: "Model not available or not permitted for your key"
+The server tries `gemini-3.6-flash`, then falls back to older models. If they all fail, check
+your terminal — the real error there is more specific than the message in the UI.
+
+### Error about a "driver adapter" from Prisma
+Run `npx prisma generate`. Prisma 7 needs the generated client plus the SQLite adapter.
 
 ### Upload not working
-- Check file size (must be under 10MB)
-- Make sure file is PDF or image format
-- Check your internet connection
+- Check file size (under 10MB) and type (PDF or image)
+- Check your internet connection — analysis calls Google's API
+
+### Analysis takes too long
+30–60 seconds is normal. Large PDFs and rate-limited keys can take longer.
 
 ### Port already in use
-- If port 3000 is already in use, Next.js will automatically use port 3001 or 3002
-- Check the terminal output for the actual port number
+Next.js will offer the next free port, or free it with `lsof -ti:3000 | xargs kill`.
 
 ---
 
 ## 🎉 That's It!
 
-Your MedSight application is now ready to analyze medical reports using AI!
-
-**Note**: This is a demo application. Always consult with healthcare professionals for medical advice.
+**Note**: This is a demo application. Data is stored unencrypted in a local SQLite file. Always
+consult a healthcare professional for medical advice — see the Limitations section in
+[README.md](README.md).

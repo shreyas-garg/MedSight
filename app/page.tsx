@@ -123,7 +123,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-20">
             <h2 className="text-4xl font-black text-background-dark dark:text-white mb-6">Understand your health with confidence</h2>
-            <p className="text-lg text-slate-custom dark:text-slate-400 leading-relaxed">Our medical-grade AI platform bridges the gap between expert findings and patient understanding, ensuring you're never left in the dark about your own data.</p>
+            <p className="text-lg text-slate-custom dark:text-slate-400 leading-relaxed">Our medical-grade AI platform bridges the gap between expert findings and patient understanding, ensuring you&apos;re never left in the dark about your own data.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Privacy Card */}
@@ -144,7 +144,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-background-dark dark:text-white mb-4">AI Simplification</h3>
               <p className="text-slate-custom dark:text-slate-400 leading-relaxed">
-                Complex medical terminology is translated into layman's terms using advanced AI trained specifically on high-quality medical literature.
+                Complex medical terminology is translated into layman&apos;s terms using advanced AI trained specifically on high-quality medical literature.
               </p>
             </div>
 
