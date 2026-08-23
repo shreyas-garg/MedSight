@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
-import LogoutButton from '@/components/LogoutButton'
+import AppNav from '@/components/AppNav'
 import DoctorReportsList from '@/components/DoctorReportsList'
 
 export default async function DoctorDashboard() {
@@ -12,17 +12,7 @@ export default async function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-background-light">
-      <header className="bg-white border-b border-primary/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-background-dark">
-              <span className="material-symbols-outlined text-2xl font-bold">clinical_notes</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-background-dark">MedSight</h1>
-          </Link>
-          <LogoutButton />
-        </div>
-      </header>
+      <AppNav />
 
       <main className="max-w-3xl mx-auto px-6 py-16 flex flex-col gap-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-8">
