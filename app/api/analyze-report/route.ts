@@ -7,9 +7,17 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user || user.role !== 'PATIENT') {
+      return NextResponse.json(
+        { error: 'You must be logged in as a patient to upload a report' },
+        { status: 401 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
-    
+
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
@@ -188,26 +196,30 @@ Generate a similar comprehensive medical report analysis. For every entry in "te
       }
     }
 
-    // If a patient is logged in, persist the report so their doctor can review it
-    const user = await getCurrentUser()
-    if (user && user.role === 'PATIENT') {
-      await prisma.report.create({
-        data: {
-          patientId: user.id,
-          doctorId: user.doctorId,
-          fileName: file.name,
-          fileSize: file.size,
-          analysisJson: JSON.stringify(analysisData),
-        },
-      })
-    }
+    // Persist the report so the patient's doctor can review it
+    const report = await prisma.report.create({
+      data: {
+        patientId: user.id,
+        doctorId: user.doctorId,
+        fileName: file.name,
+        fileSize: file.size,
+        analysisJson: JSON.stringify(analysisData),
+      },
+    })
+
+    const doctor = user.doctorId
+      ? await prisma.user.findUnique({ where: { id: user.doctorId }, select: { name: true } })
+      : null
 
     // Return the analysis
     return NextResponse.json({
       success: true,
       fileName: file.name,
       fileSize: file.size,
-      analysis: analysisData
+      analysis: analysisData,
+      reportId: report.id,
+      reportStatus: report.status,
+      doctorName: doctor?.name ?? null,
     })
 
   } catch (error: any) {

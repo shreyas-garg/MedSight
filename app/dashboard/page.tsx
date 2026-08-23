@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { importPDF } from '../../utils/pdf'
+import AppNav from '@/components/AppNav'
 
 interface TestResult {
   testName: string
@@ -35,9 +35,28 @@ interface ReportAnalysis {
   summary: string
 }
 
+type ReviewStatus = {
+  reportId: string
+  doctorName: string | null
+  status: 'PENDING' | 'REVIEWED'
+  feedback: string | null
+}
+
 export default function DashboardPage() {
   const [analysis, setAnalysis] = useState<ReportAnalysis | null>(null)
   const [fileName, setFileName] = useState<string>('')
+  const [checkedQuestions, setCheckedQuestions] = useState<Set<number>>(new Set())
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null)
+  const [review, setReview] = useState<ReviewStatus | null>(null)
+
+  const toggleQuestion = (index: number) => {
+    setCheckedQuestions((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
 
   useEffect(() => {
     // Load analysis data from sessionStorage
@@ -47,11 +66,41 @@ export default function DashboardPage() {
         const data = JSON.parse(storedData)
         setAnalysis(data.analysis)
         setFileName(data.fileName || 'Medical Report')
+        if (data.reportId) {
+          setReview({
+            reportId: data.reportId,
+            doctorName: data.doctorName ?? null,
+            status: data.reportStatus ?? 'PENDING',
+            feedback: null,
+          })
+        }
       } catch (err) {
         console.error('Failed to load analysis data:', err)
       }
     }
   }, [])
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null))
+  }, [])
+
+  // Refresh with the live review status in case the doctor reviewed it after upload
+  useEffect(() => {
+    if (!review?.reportId) return
+    fetch('/api/patient/reports')
+      .then((res) => res.json())
+      .then((data) => {
+        const match = (data.reports || []).find((r: any) => r.id === review.reportId)
+        if (match) {
+          setReview((prev) => (prev ? { ...prev, status: match.status, feedback: match.feedback } : prev))
+        }
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [review?.reportId])
 
   // If no analysis data, show sample data
   const displayAnalysis = analysis || {
@@ -99,106 +148,48 @@ export default function DashboardPage() {
   const displayFileName = fileName || 'Blood Test Summary - Oct 2023'
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-white border-r border-primary/10 flex flex-col h-full">
-        <div className="p-6 flex items-center gap-3">
-          <Link href="/">
-            <div className="bg-primary p-2 rounded-lg cursor-pointer">
-              <span className="material-symbols-outlined text-background-dark">analytics</span>
-            </div>
-          </Link>
-          <Link href="/">
-            <h1 className="text-xl font-bold tracking-tight text-background-dark cursor-pointer">MedSight</h1>
-          </Link>
-        </div>
-        <nav className="flex-1 px-4 space-y-2 py-4">
-          <p className="px-3 text-xs font-semibold text-primary/60 uppercase tracking-wider mb-2">Main Menu</p>
-          <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav font-medium" href="/dashboard">
-            <span className="material-symbols-outlined">description</span>
-            My Reports
-          </a>
-          <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-stone-600 hover:bg-primary/10 transition-colors font-medium" href="/upload">
-            <span className="material-symbols-outlined">cloud_upload</span>
-            New Upload
-          </a>
-          <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-stone-600 hover:bg-primary/10 transition-colors font-medium" href="/health-profile">
-            <span className="material-symbols-outlined">monitoring</span>
-            Health Profile
-          </a>
-          <div className="pt-6">
-            <p className="px-3 text-xs font-semibold text-primary/60 uppercase tracking-wider mb-2">System</p>
-            <a className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-stone-600 hover:bg-primary/10 transition-colors font-medium" href="#">
-              <span className="material-symbols-outlined">settings</span>
-              Settings
-            </a>
-          </div>
-        </nav>
-        <div className="p-4 mt-auto">
-          <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-            <p className="text-xs font-medium text-stone-600 mb-2">Need help?</p>
-            <button className="w-full py-2 bg-white text-xs font-bold rounded-lg border border-primary/20 shadow-sm text-background-dark hover:bg-primary/5 transition-colors">
-              Contact Support
-            </button>
-          </div>
-        </div>
-      </aside>
+    <div className="flex flex-col h-screen overflow-hidden">
+      <AppNav />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background-light overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-primary/10 flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-2 text-stone-500 text-sm">
-            <span>Reports</span>
-            <span className="material-symbols-outlined text-xs">chevron_right</span>
-            <span className="text-background-dark font-medium">{displayFileName}</span>
+        <header className="h-16 bg-white border-b border-primary/10 flex items-center justify-between px-4 sm:px-8 shrink-0 gap-4">
+          <div className="flex items-center gap-2 text-stone-500 text-sm min-w-0">
+            <span className="hidden sm:inline">Reports</span>
+            <span className="material-symbols-outlined text-xs hidden sm:inline">chevron_right</span>
+            <span className="text-background-dark font-medium truncate">{displayFileName}</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
             <Link href="/upload">
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-background-dark font-bold rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all text-sm">
+              <button className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary text-background-dark font-bold rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all text-sm">
                 <span className="material-symbols-outlined text-lg">upload_file</span>
-                Upload New Report
+                <span className="hidden sm:inline">Upload New Report</span>
               </button>
             </Link>
-            <div className="relative">
-              <span className="material-symbols-outlined text-stone-500 cursor-pointer hover:text-primary transition-colors">notifications</span>
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </div>
-            <div className="flex items-center gap-3 pl-6 border-l border-stone-200">
-              <div className="text-right">
-                <p className="text-sm font-semibold text-background-dark leading-tight">{displayAnalysis.patientName}</p>
-                <p className="text-xs text-stone-500">Patient ID: #MS-9921</p>
+            {user && (
+              <div className="items-center gap-3 pl-6 border-l border-stone-200 hidden md:flex">
+                <div className="text-right min-w-0">
+                  <p className="text-sm font-semibold text-background-dark leading-tight truncate">{user.name}</p>
+                  <p className="text-xs text-stone-500 truncate">{user.email}</p>
+                </div>
+                <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 shrink-0">
+                  <span className="material-symbols-outlined text-primary">person</span>
+                </div>
               </div>
-              <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
-                <img 
-                  className="w-full h-full object-cover" 
-                  alt="User profile avatar of patient" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuACL_kFJGAd741YIuovmK5XOCX494J8o_55D3ogFlQMSV0YFkVEy9WTmoUaZqA0QxjIvLnTNwqG9UrnMJnYbqWHxhW0VEvyezUjYPvyMThmXO73KdzLJnrqXKqOnpitZwjNfx6TKsTTNSVmIdo4V811QK10IhkgiVL2sQfVmLxin7n2A8qbfMXU2EdvTh0VglMcVSLyg16RjZvWyEoNhPnwJ6Os7fukxX2cGMWv7uShnXXI1NuQePJkknOEko2kK6cbshbihJzBBR0" 
-                />
-              </div>
-            </div>
+            )}
           </div>
         </header>
 
         {/* Dashboard Content: Split Pane */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
           {/* Left Pane: Document Preview */}
-          <div className="w-1/2 p-6 overflow-y-auto custom-scrollbar border-r border-primary/10 flex flex-col bg-stone-100">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-widest flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">attachment</span>
-                Original Document
-              </h3>
-              <div className="flex gap-2">
-                <button className="p-1.5 bg-white rounded-lg border border-stone-200 shadow-sm hover:bg-stone-50">
-                  <span className="material-symbols-outlined text-lg">zoom_in</span>
-                </button>
-                <button className="p-1.5 bg-white rounded-lg border border-stone-200 shadow-sm hover:bg-stone-50">
-                  <span className="material-symbols-outlined text-lg">zoom_out</span>
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 bg-white rounded-xl shadow-xl border border-stone-200 p-12 min-h-[1000px] mx-auto w-full max-w-[800px] relative">
+          <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:overflow-y-auto custom-scrollbar border-b lg:border-b-0 lg:border-r border-primary/10 flex flex-col bg-stone-100">
+            <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-lg">attachment</span>
+              Original Document
+            </h3>
+            <div className="shrink-0 bg-white rounded-xl shadow-xl border border-stone-200 p-6 sm:p-12 min-h-[500px] lg:min-h-[1000px] mx-auto w-full max-w-[800px] relative">
               {/* Simulated Medical Report UI */}
               <div className="border-b-2 border-stone-100 pb-8 mb-8 flex justify-between items-start">
                 <div>
@@ -210,36 +201,32 @@ export default function DashboardPage() {
                   <p>Type: {displayAnalysis.reportType}</p>
                 </div>
               </div>
-              <div className="space-y-6">
-                <div className="grid grid-cols-3 gap-4 text-xs font-bold text-stone-400 border-b border-stone-100 pb-2">
-                  <div>TEST NAME</div>
-                  <div>RESULT</div>
-                  <div>REFERENCE RANGE</div>
+              <div className="space-y-6 min-w-0">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs font-bold text-stone-400 border-b border-stone-100 pb-2">
+                  <div className="min-w-0">TEST NAME</div>
+                  <div className="min-w-0">RESULT</div>
+                  <div className="min-w-0">REFERENCE RANGE</div>
                 </div>
                 {displayAnalysis.testResults.map((test, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-4 text-sm items-center py-2 border-b border-stone-50">
-                    <div className="font-medium">{test.testName}</div>
-                    <div className={`font-bold ${
-                      test.status === 'low' ? 'text-red-600' : 
-                      test.status === 'high' ? 'text-amber-600' : 
+                  <div key={index} className="grid grid-cols-3 gap-2 sm:gap-4 text-sm items-center py-2 border-b border-stone-50">
+                    <div className="font-medium min-w-0 break-words">{test.testName}</div>
+                    <div className={`font-bold min-w-0 break-words ${
+                      test.status === 'low' ? 'text-red-600' :
+                      test.status === 'high' ? 'text-amber-600' :
                       'text-stone-800'
                     }`}>
                       {test.result}
                     </div>
-                    <div className="text-stone-500">{test.referenceRange}</div>
+                    <div className="text-stone-500 min-w-0 break-words">{test.referenceRange}</div>
                   </div>
                 ))}
-              </div>
-              {/* Watermark/Stamp */}
-              <div className="absolute bottom-20 right-20 opacity-10 rotate-12">
-                <span className="material-symbols-outlined text-[120px] text-stone-400">verified</span>
               </div>
             </div>
           </div>
 
           {/* Right Pane: AI Summary */}
-          <div className="w-1/2 p-8 overflow-y-auto custom-scrollbar bg-white flex flex-col">
-            <div className="flex items-start justify-between mb-8">
+          <div className="w-full lg:w-1/2 p-4 sm:p-8 lg:overflow-y-auto custom-scrollbar bg-white flex flex-col">
+            <div className="flex items-start justify-between gap-4 flex-wrap mb-8">
               <div>
                 <div className="flex items-center gap-2 text-primary font-semibold mb-1">
                   <span className="material-symbols-outlined">auto_awesome</span>
@@ -256,11 +243,52 @@ export default function DashboardPage() {
                     mod.generateSummaryPDF(displayAnalysis, (displayFileName || 'MedSight_Summary') + '.pdf');
                   }}
                 >
-                  <span className="material-symbols-outlined text-lg">share</span>
-                  Share with Doctor
+                  <span className="material-symbols-outlined text-lg">download</span>
+                  Download PDF
                 </button>
               </div>
             </div>
+
+            {review && (
+              <div
+                className={`rounded-xl border p-4 mb-8 flex items-start gap-3 ${
+                  review.doctorName ? 'bg-primary/5 border-primary/20' : 'bg-amber-50 border-amber-200'
+                }`}
+              >
+                <span className={`material-symbols-outlined ${review.doctorName ? 'text-primary' : 'text-amber-600'}`}>
+                  {review.doctorName ? 'forward_to_inbox' : 'person_search'}
+                </span>
+                <div className="flex-1 min-w-0">
+                  {review.doctorName ? (
+                    <>
+                      <p className="text-sm font-bold text-background-dark">
+                        Sent to Dr. {review.doctorName} — {review.status === 'REVIEWED' ? 'Reviewed' : 'Pending review'}
+                      </p>
+                      {review.feedback ? (
+                        <p className="text-sm text-slate-700 mt-1">
+                          <span className="font-semibold">Doctor&apos;s feedback:</span> {review.feedback}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-slate-600 mt-1">
+                          Your doctor hasn&apos;t reviewed this yet.{' '}
+                          <Link href="/patient" className="text-primary font-semibold hover:underline">
+                            Check status in My Reports
+                          </Link>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-700">
+                      This report was saved to your account, but you haven&apos;t connected with a doctor yet.{' '}
+                      <Link href="/patient" className="text-primary font-semibold hover:underline">
+                        Connect with a doctor
+                      </Link>{' '}
+                      so they can review it.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-8">
               {/* Key Findings */}
@@ -289,9 +317,9 @@ export default function DashboardPage() {
                   </div>
                   <h3 className="text-lg font-bold text-background-dark">Medications & Supplements</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {displayAnalysis.medications.map((med, index) => (
-                    <div key={index} className="p-4 border border-stone-100 rounded-xl bg-stone-50">
+                    <div key={index} className="p-4 border border-stone-100 rounded-xl bg-stone-50 min-w-0">
                       <p className="text-xs font-semibold text-stone-400 uppercase mb-1">Recommended</p>
                       <h4 className="font-bold text-background-dark mb-1">{med.name}</h4>
                       <p className="text-xs text-stone-500 mb-1">{med.dosage}</p>
@@ -310,12 +338,25 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-bold text-background-dark">Questions for your Doctor</h3>
                 </div>
                 <div className="space-y-3">
-                  {displayAnalysis.questions.map((question, index) => (
-                    <div key={index} className="flex items-center gap-3 p-4 bg-white border border-stone-200 rounded-xl hover:border-primary/40 transition-colors cursor-pointer group">
-                      <div className="size-5 rounded border-2 border-primary/40 group-hover:bg-primary/10 flex items-center justify-center transition-colors"></div>
-                      <p className="text-stone-700 font-medium">{question}</p>
-                    </div>
-                  ))}
+                  {displayAnalysis.questions.map((question, index) => {
+                    const checked = checkedQuestions.has(index)
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => toggleQuestion(index)}
+                        className="w-full flex items-center gap-3 p-4 bg-white border border-stone-200 rounded-xl hover:border-primary/40 transition-colors cursor-pointer group text-left"
+                      >
+                        <div
+                          className={`size-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
+                            checked ? 'bg-primary border-primary' : 'border-primary/40 group-hover:bg-primary/10'
+                          }`}
+                        >
+                          {checked && <span className="material-symbols-outlined text-background-dark text-sm">check</span>}
+                        </div>
+                        <p className={`font-medium ${checked ? 'text-stone-400 line-through' : 'text-stone-700'}`}>{question}</p>
+                      </button>
+                    )
+                  })}
                 </div>
               </section>
 
