@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { buildTestProgressions } from '@/lib/analytics'
+import TestProgressionCard from '@/components/TestProgressionCard'
 
 type PatientSummary = { id: string; name: string; email: string; reportCount: number }
 
@@ -47,6 +49,8 @@ export default function PatientHistoryExplorer() {
       .finally(() => setLoadingReports(false))
   }, [selectedId])
 
+  const progressions = useMemo(() => buildTestProgressions(reports), [reports])
+
   if (loadingPatients) return <p className="text-sm text-slate-custom">Loading your patients...</p>
 
   if (patients.length === 0) {
@@ -67,6 +71,22 @@ export default function PatientHistoryExplorer() {
           </option>
         ))}
       </select>
+
+      {!loadingReports && progressions.length > 0 && (
+        <div className="mb-10">
+          <h3 className="text-lg font-bold text-background-dark mb-1">Health Analytics</h3>
+          <p className="text-sm text-slate-custom mb-4">Tracked values with more than one reading, oldest to latest.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {progressions.map((p) => (
+              <TestProgressionCard key={p.testName} progression={p} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loadingReports && reports.length > 0 && (
+        <h3 className="text-lg font-bold text-background-dark mb-4">Visit Timeline</h3>
+      )}
 
       {loadingReports ? (
         <p className="text-sm text-slate-custom">Loading history...</p>

@@ -77,18 +77,24 @@ export async function POST(request: NextRequest) {
     {
       "testName": "Hemoglobin (Hb)",
       "result": "11.2 g/dL",
+      "value": 11.2,
+      "unit": "g/dL",
       "referenceRange": "13.5 - 17.5 g/dL",
       "status": "low"
     },
     {
       "testName": "WBC Count",
       "result": "7.4 x10^9/L",
+      "value": 7.4,
+      "unit": "x10^9/L",
       "referenceRange": "4.5 - 11.0 x10^9/L",
       "status": "normal"
     },
     {
       "testName": "Vitamin D, 25-OH",
       "result": "22 ng/mL",
+      "value": 22,
+      "unit": "ng/mL",
       "referenceRange": "30 - 100 ng/mL",
       "status": "low"
     }
@@ -113,7 +119,7 @@ export async function POST(request: NextRequest) {
   "summary": "The report shows some areas needing attention, particularly low Vitamin D and Hemoglobin levels, while cholesterol and WBC counts are healthy."
 }
 
-Generate a similar comprehensive medical report analysis. Respond ONLY with the JSON object, no other text.`
+Generate a similar comprehensive medical report analysis. For every entry in "testResults", also include "value" (the numeric portion of the result, as a JSON number, or null if not numeric) and "unit" (the unit string, or an empty string if none) so results can be tracked over time. Respond ONLY with the JSON object, no other text.`
 
     const imagePart = {
       inlineData: {
