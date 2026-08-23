@@ -13,9 +13,7 @@ export default function HomePage() {
             <h1 className="text-2xl font-black tracking-tight text-background-dark dark:text-white">MedSight</h1>
           </div>
           <div className="hidden md:flex items-center gap-10">
-            <a className="text-sm font-semibold text-slate-custom hover:text-primary transition-colors" href="#">How it Works</a>
-            <a className="text-sm font-semibold text-slate-custom hover:text-primary transition-colors" href="#">Privacy</a>
-            <a className="text-sm font-semibold text-slate-custom hover:text-primary transition-colors" href="#">Pricing</a>
+            <a className="text-sm font-semibold text-slate-custom hover:text-primary transition-colors" href="#how-it-works">How it Works</a>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login">
@@ -121,7 +119,7 @@ export default function HomePage() {
       </div>
 
       {/* Features Section */}
-      <section className="py-24 bg-background-light dark:bg-background-dark">
+      <section id="how-it-works" className="py-24 bg-background-light dark:bg-background-dark">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-20">
             <h2 className="text-4xl font-black text-background-dark dark:text-white mb-6">Understand your health with confidence</h2>
@@ -190,7 +188,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900 py-20">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="col-span-1 md:col-span-1 flex flex-col gap-6">
             <div className="flex items-center gap-2">
               <div className="size-8 bg-primary rounded flex items-center justify-center text-background-dark">
@@ -205,38 +203,17 @@ export default function HomePage() {
           <div>
             <h4 className="font-bold text-background-dark dark:text-white mb-6 uppercase text-xs tracking-widest">Product</h4>
             <ul className="flex flex-col gap-4 text-sm text-slate-custom dark:text-slate-400">
-              <li><a className="hover:text-primary transition-colors" href="#">How it works</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Pricing</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Security</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Sample Reports</a></li>
+              <li><a className="hover:text-primary transition-colors" href="#how-it-works">How it works</a></li>
+              <li><Link className="hover:text-primary transition-colors" href="/upload">Upload a Report</Link></li>
+              <li><Link className="hover:text-primary transition-colors" href="/dashboard">Sample Report</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-background-dark dark:text-white mb-6 uppercase text-xs tracking-widest">Company</h4>
+            <h4 className="font-bold text-background-dark dark:text-white mb-6 uppercase text-xs tracking-widest">Get Started</h4>
             <ul className="flex flex-col gap-4 text-sm text-slate-custom dark:text-slate-400">
-              <li><a className="hover:text-primary transition-colors" href="#">About Us</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Contact</a></li>
+              <li><Link className="hover:text-primary transition-colors" href="/signup">Create an account</Link></li>
+              <li><Link className="hover:text-primary transition-colors" href="/login">Log in</Link></li>
             </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-background-dark dark:text-white mb-6 uppercase text-xs tracking-widest">Stay Updated</h4>
-            <div className="flex flex-col gap-4">
-              <p className="text-sm text-slate-custom dark:text-slate-400">Get our guide on "Questions to ask your doctor".</p>
-              <div className="flex">
-                <input className="bg-slate-100 dark:bg-slate-800 border-none rounded-l-lg text-sm px-4 focus:ring-primary grow" placeholder="Email address" type="email" />
-                <button className="bg-primary text-background-dark px-4 py-2 rounded-r-lg font-bold text-sm">Join</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-slate-100 dark:border-slate-900 flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* Copyright removed */}
-          <div className="flex items-center gap-6">
-            <a className="text-slate-custom hover:text-primary" href="#"><span className="material-symbols-outlined">public</span></a>
-            <a className="text-slate-custom hover:text-primary" href="#"><span className="material-symbols-outlined">mail</span></a>
-            <a className="text-slate-custom hover:text-primary" href="#"><span className="material-symbols-outlined">alternate_email</span></a>
           </div>
         </div>
       </footer>
