@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import LogoutButton from '@/components/LogoutButton'
+import AppNav from '@/components/AppNav'
 import DoctorPicker from '@/components/DoctorPicker'
 import PatientReportsList from '@/components/PatientReportsList'
 import RehabChecklist from '@/components/RehabChecklist'
@@ -19,17 +19,7 @@ export default async function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-background-light">
-      <header className="bg-white border-b border-primary/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-background-dark">
-              <span className="material-symbols-outlined text-2xl font-bold">clinical_notes</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-background-dark">MedSight</h1>
-          </Link>
-          <LogoutButton />
-        </div>
-      </header>
+      <AppNav />
 
       <main className="max-w-3xl mx-auto px-6 py-16 flex flex-col gap-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
@@ -52,11 +42,9 @@ export default async function PatientDashboard() {
           </Link>
         </div>
 
-        {!doctor && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8">
-            <DoctorPicker />
-          </div>
-        )}
+        <div className="bg-white rounded-2xl border border-slate-200 p-8">
+          <DoctorPicker currentDoctorId={user.doctorId} currentDoctorName={doctor?.name ?? null} />
+        </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-8">
           <h3 className="text-lg font-bold text-background-dark mb-5">Daily Rehabilitation</h3>
