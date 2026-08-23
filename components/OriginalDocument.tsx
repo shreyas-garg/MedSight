@@ -75,48 +75,25 @@ export default function OriginalDocument({
     )
   }
 
-  // No stored original (pre-existing report, or file unavailable)
+  // No stored original: reports created before file storage existed. The extracted
+  // values are shown in full in the analysis panel, so don't duplicate them here.
   return (
-    <div className="shrink-0 bg-white rounded-xl shadow-xl border border-stone-200 p-6 sm:p-12 min-h-[500px] mx-auto w-full max-w-[800px]">
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-8 flex items-start gap-2">
-        <span className="material-symbols-outlined text-amber-600 text-lg">info</span>
-        <p className="text-xs text-amber-800">
-          The original file wasn&apos;t saved for this report. Shown below are the values MedSight extracted — not the
-          source document.
+    <div className="shrink-0 bg-white rounded-xl shadow-xl border border-stone-200 p-8 sm:p-12 min-h-[320px] mx-auto w-full max-w-[800px] flex flex-col items-center justify-center text-center">
+      <div className="size-14 rounded-full bg-stone-100 flex items-center justify-center mb-5">
+        <span className="material-symbols-outlined text-3xl text-stone-400">hide_image</span>
+      </div>
+      <h2 className="text-lg font-bold text-stone-800 mb-1 break-words max-w-full">{fileName}</h2>
+      {(reportDate || reportType) && (
+        <p className="text-sm text-stone-500 mb-4">
+          {[reportType, reportDate && `Date: ${reportDate}`].filter(Boolean).join(' • ')}
         </p>
-      </div>
-
-      <div className="border-b-2 border-stone-100 pb-6 mb-8 flex justify-between items-start gap-4 flex-wrap">
-        <div className="min-w-0">
-          <h2 className="text-xl font-bold text-stone-800 truncate">{fileName}</h2>
-          <p className="text-stone-500 text-sm">Extracted values</p>
-        </div>
-        <div className="text-right text-sm text-stone-500 min-w-0">
-          {reportDate && <p className="truncate">Date: {reportDate}</p>}
-          {reportType && <p className="truncate">Type: {reportType}</p>}
-        </div>
-      </div>
-
-      <div className="space-y-6 min-w-0">
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs font-bold text-stone-400 border-b border-stone-100 pb-2">
-          <div className="min-w-0">TEST NAME</div>
-          <div className="min-w-0">RESULT</div>
-          <div className="min-w-0">REFERENCE RANGE</div>
-        </div>
-        {testResults.map((test, index) => (
-          <div key={index} className="grid grid-cols-3 gap-2 sm:gap-4 text-sm items-center py-2 border-b border-stone-50">
-            <div className="font-medium min-w-0 break-words">{test.testName}</div>
-            <div
-              className={`font-bold min-w-0 break-words ${
-                test.status === 'low' ? 'text-red-600' : test.status === 'high' ? 'text-amber-600' : 'text-stone-800'
-              }`}
-            >
-              {test.result}
-            </div>
-            <div className="text-stone-500 min-w-0 break-words">{test.referenceRange}</div>
-          </div>
-        ))}
-      </div>
+      )}
+      <p className="text-sm text-stone-600 max-w-sm">
+        The original file wasn&apos;t saved for this report — it predates document storage. All{' '}
+        {testResults.length} extracted value{testResults.length === 1 ? '' : 's'} are listed under{' '}
+        <span className="font-semibold">All Test Results</span>.
+      </p>
+      <p className="text-xs text-stone-400 mt-4">Newer uploads keep the original document.</p>
     </div>
   )
 }

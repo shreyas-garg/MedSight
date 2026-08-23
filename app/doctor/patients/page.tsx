@@ -4,7 +4,11 @@ import { getCurrentUser } from '@/lib/auth'
 import AppNav from '@/components/AppNav'
 import PatientHistoryExplorer from '@/components/PatientHistoryExplorer'
 
-export default async function DoctorPatientsPage() {
+export default async function DoctorPatientsPage({
+  searchParams,
+}: {
+  searchParams: { patient?: string }
+}) {
   const user = await getCurrentUser()
 
   if (!user) redirect('/login')
@@ -23,7 +27,7 @@ export default async function DoctorPatientsPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-8">
           <h2 className="text-2xl font-black text-background-dark mb-1">Patient History</h2>
           <p className="text-sm text-slate-custom mb-8">Review a patient&apos;s full report timeline.</p>
-          <PatientHistoryExplorer />
+          <PatientHistoryExplorer initialPatientId={searchParams.patient ?? null} />
         </div>
       </main>
     </div>
