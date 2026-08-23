@@ -52,13 +52,17 @@ MedSight turns complex medical reports into clear, actionable summaries using Go
    npm rebuild prisma @prisma/engines better-sqlite3
    ```
 
-2. Create `.env.local` with your Gemini API key:
+2. Create your environment file from the template and add your Gemini API key:
 
    ```bash
-   GEMINI_API_KEY=your_gemini_api_key_here
+   cp .env.example .env
    ```
 
-   `.env` already contains the SQLite connection string (`DATABASE_URL="file:./dev.db"`).
+   Then edit `.env` and replace `your_gemini_api_key_here` with your real key. It already
+   contains the SQLite connection string (`DATABASE_URL="file:./dev.db"`), which Prisma needs.
+
+   Environment files are gitignored, so a fresh clone starts with **no accounts, reports, or
+   uploaded files** — you create your own on first run.
 
 3. Create the database and generate the client:
 
