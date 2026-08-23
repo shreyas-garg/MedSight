@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { buildTestProgressions } from '@/lib/analytics'
 import TestProgressionCard from '@/components/TestProgressionCard'
+import RehabTaskManager from '@/components/RehabTaskManager'
 
 type PatientSummary = { id: string; name: string; email: string; reportCount: number }
 
@@ -83,6 +84,10 @@ export default function PatientHistoryExplorer() {
           </div>
         </div>
       )}
+
+      <div className="mb-10">
+        <RehabTaskManager patientId={selectedId} />
+      </div>
 
       {!loadingReports && reports.length > 0 && (
         <h3 className="text-lg font-bold text-background-dark mb-4">Visit Timeline</h3>
