@@ -26,14 +26,14 @@ is expected and correct.
 
 ### Step 3: Add Your API Key
 
-Create a file named `.env.local` in the root folder with:
+Copy the template, then paste your key into it:
 
 ```bash
-GEMINI_API_KEY=your_key_here
+cp .env.example .env
 ```
 
-`.env` already has the database URL (`DATABASE_URL="file:./dev.db"`), so you don't need to
-change it.
+Open `.env` and replace `your_gemini_api_key_here` with your real key. The database URL
+(`DATABASE_URL="file:./dev.db"`) is already filled in.
 
 ### Step 4: Set Up the Database
 ```bash
