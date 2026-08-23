@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import LogoutButton from '@/components/LogoutButton'
 import DoctorPicker from '@/components/DoctorPicker'
 import PatientReportsList from '@/components/PatientReportsList'
+import RehabChecklist from '@/components/RehabChecklist'
 
 export default async function PatientDashboard() {
   const user = await getCurrentUser()
@@ -56,6 +57,11 @@ export default async function PatientDashboard() {
             <DoctorPicker />
           </div>
         )}
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-8">
+          <h3 className="text-lg font-bold text-background-dark mb-5">Daily Rehabilitation</h3>
+          <RehabChecklist />
+        </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-8">
           <h3 className="text-lg font-bold text-background-dark mb-5">Your Reports</h3>

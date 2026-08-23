@@ -38,6 +38,9 @@ model User {
 
   reportsAsPatient Report[] @relation("PatientReports")
   reportsAsDoctor  Report[] @relation("DoctorReports")
+
+  rehabTasksAsPatient RehabTask[] @relation("PatientRehabTasks")
+  rehabTasksAsDoctor  RehabTask[] @relation("DoctorRehabTasks")
 }
 
 model Session {
@@ -62,4 +65,27 @@ model Report {
   feedback     String?
   reviewedAt   DateTime?
   createdAt    DateTime     @default(now())
+}
+
+model RehabTask {
+  id          String             @id @default(cuid())
+  patientId   String
+  patient     User               @relation("PatientRehabTasks", fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      User               @relation("DoctorRehabTasks", fields: [doctorId], references: [id])
+  title       String
+  description String?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  completions RehabCompletion[]
+}
+
+model RehabCompletion {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        RehabTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  date        String // YYYY-MM-DD, one completion per task per calendar day
+  completedAt DateTime  @default(now())
+
+  @@unique([taskId, date])
 }
