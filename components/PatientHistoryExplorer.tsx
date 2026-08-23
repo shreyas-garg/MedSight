@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { buildTestProgressions } from '@/lib/analytics'
 import TestProgressionCard from '@/components/TestProgressionCard'
 import RehabTaskManager from '@/components/RehabTaskManager'
@@ -24,7 +25,11 @@ type ReportDetail = {
   }
 }
 
-export default function PatientHistoryExplorer() {
+export default function PatientHistoryExplorer({
+  initialPatientId = null,
+}: {
+  initialPatientId?: string | null
+}) {
   const [patients, setPatients] = useState<PatientSummary[]>([])
   const [selectedId, setSelectedId] = useState('')
   const [reports, setReports] = useState<ReportDetail[]>([])
@@ -38,10 +43,14 @@ export default function PatientHistoryExplorer() {
       .then((data) => {
         const list: PatientSummary[] = data.patients || []
         setPatients(list)
-        if (list.length > 0) setSelectedId(list[0].id)
+        if (list.length === 0) return
+        // Honour ?patient=<id> when it's actually one of this doctor's patients
+        const requested = initialPatientId && list.some((p) => p.id === initialPatientId) ? initialPatientId : null
+        setSelectedId(requested ?? list[0].id)
       })
       .finally(() => setLoadingPatients(false))
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPatientId])
 
   useEffect(() => {
     if (!selectedId) {
@@ -161,17 +170,26 @@ export default function PatientHistoryExplorer() {
 
                 {r.analysis?.summary && <p className="text-sm text-slate-600 mt-2">{r.analysis.summary}</p>}
 
-                {r.hasFile && (
-                  <a
-                    href={`/api/reports/${r.id}/file`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-primary hover:underline"
+                <div className="flex items-center gap-5 flex-wrap mt-3">
+                  <Link
+                    href={`/doctor/reports/${r.id}`}
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
                   >
-                    <span className="material-symbols-outlined text-lg">description</span>
-                    View original document
-                  </a>
-                )}
+                    <span className="material-symbols-outlined text-lg">open_in_full</span>
+                    Open full report
+                  </Link>
+                  {r.hasFile && (
+                    <a
+                      href={`/api/reports/${r.id}/file`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                    >
+                      <span className="material-symbols-outlined text-lg">description</span>
+                      Original document
+                    </a>
+                  )}
+                </div>
 
                 {r.analysis?.testResults && r.analysis.testResults.length > 0 && (
                   <div className="mt-4 overflow-x-auto">

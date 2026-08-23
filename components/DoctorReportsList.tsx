@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 type DoctorReport = {
   id: string
@@ -94,6 +95,13 @@ return (
           {r.analysis?.summary && <p className="text-sm text-slate-600 mt-2">{r.analysis.summary}</p>}
 
           <div className="flex items-center gap-5 flex-wrap mt-3">
+            <Link
+              href={`/doctor/reports/${r.id}`}
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+            >
+              <span className="material-symbols-outlined text-lg">open_in_full</span>
+              Open full report
+            </Link>
             {r.hasFile && (
               <a
                 href={`/api/reports/${r.id}/file`}
@@ -102,7 +110,7 @@ return (
                 className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
               >
                 <span className="material-symbols-outlined text-lg">description</span>
-                View original document
+                Original document
               </a>
             )}
             {r.status !== 'REVIEWED' && expandedId !== r.id && (
@@ -110,7 +118,7 @@ return (
                 onClick={() => setExpandedId(r.id)}
                 className="text-sm font-bold text-primary hover:underline"
               >
-                Give feedback
+                Quick feedback
               </button>
             )}
           </div>
