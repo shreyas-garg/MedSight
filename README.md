@@ -1,150 +1,151 @@
-# MedSight - Medical Report Analysis Platform
+# MedSight — Medical Report Analysis Platform
 
-MedSight is a modern web application that helps patients understand their medical reports by translating complex medical jargon into clear, actionable summaries using Google's Gemini AI.
+MedSight turns complex medical reports into clear, actionable summaries using Google's Gemini AI, and connects patients with a doctor who can review those reports and send feedback.
+
+> **Demo / educational project.** It stores real medical data in a local SQLite file with no encryption at rest, and has not been reviewed for HIPAA/GDPR compliance. See [Limitations](#limitations) before using it with anyone's real health data.
 
 ## Features
 
-- 🏥 **Landing Page**: Beautiful marketing page showcasing MedSight's features
-- 📤 **Upload Interface**: Drag-and-drop file upload supporting PDF and images
-- 🤖 **AI Analysis**: Powered by Google Gemini AI to analyze medical reports
-- 📊 **Dashboard**: Split-pane interface showing original medical reports alongside AI-generated summaries
-- 🎨 **Modern UI**: Built with Tailwind CSS featuring a clean, accessible design
-- 🔒 **Privacy First**: Reports are processed in real-time and not stored permanently
-- ⚡ **Fast**: Built with Next.js 14 and App Router for optimal performance
+### For patients
+- **Upload reports** — PDF or image (PNG/JPG), up to 10MB, analyzed by Gemini
+- **AI summary** — key findings, test results, suggested medications, and questions to ask your doctor
+- **Connect with a doctor** — search by name, email, or ID; switch doctors at any time
+- **Report history** — every report you've uploaded, with your doctor's feedback
+- **Daily rehabilitation** — check off tasks your doctor assigned, with a 7-day streak view
+
+### For doctors
+- **Review queue** — pending-review count, with the AI summary and the original document
+- **Give feedback** — written feedback per report, visible to the patient immediately
+- **Patient history** — search your patients, then see a chronological timeline of their visits
+- **Health analytics** — trend sparklines per test value across visits (e.g. hemoglobin rising over three visits)
+- **Assign rehab tasks** — per patient, with adherence tracking
 
 ## Tech Stack
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
-* **AI**: Google Generative AI (Gemini)
-- **Icons**: Google Material Symbols
-- **Font**: Inter (Google Fonts)
+- **Database**: SQLite via Prisma 7 (`@prisma/adapter-better-sqlite3`)
+- **Auth**: email + password (bcrypt), DB-backed sessions in an httpOnly cookie
+- **AI**: Google Generative AI (Gemini)
+- **Styling**: Tailwind CSS · Material Symbols icons · Inter
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- A Google Gemini API key (get one at [Google AI Studio](https://makersuite.google.com/app/apikey))
+- Node.js 18+
+- A Google Gemini API key — see [Getting a Gemini API key](#getting-a-gemini-api-key)
 
 ### Installation
 
 1. Install dependencies:
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-2. Set up environment variables:
+   Prisma and `better-sqlite3` need their install scripts to run. If npm reports them as
+   blocked, approve them and rebuild:
 
-Create a `.env.local` file in the root directory and add your Gemini API key:
+   ```bash
+   npm install-scripts approve prisma @prisma/engines better-sqlite3
+   npm rebuild prisma @prisma/engines better-sqlite3
+   ```
 
-```bash
-GEMINI_API_KEY=your_actual_gemini_api_key_here
-```
+2. Create `.env.local` with your Gemini API key:
 
-**Important**: Replace `your_actual_gemini_api_key_here` with your actual Gemini API key from Google AI Studio.
+   ```bash
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
 
-3. Run the development server:
+   `.env` already contains the SQLite connection string (`DATABASE_URL="file:./dev.db"`).
 
-```bash
-npm run dev
-```
+3. Create the database and generate the client:
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+   ```bash
+   npx prisma migrate dev
+   npx prisma generate
+   ```
 
-## How to Get a Gemini API Key
+4. Start the dev server:
 
-1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the generated API key
-5. Paste it in your `.env.local` file
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000), then **Sign up** — choose *Patient*
+   or *Doctor*. To try the full flow, create one of each: sign up as a doctor first, then as a
+   patient, connect the patient to that doctor, and upload a report.
+
+### Getting a Gemini API key
+
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Sign in and create an API key
+
+Newly issued keys start with `AQ.` — Google retired the older `AIzaSy…` format in 2026, so an
+`AQ.` key is expected and correct.
 
 ## Project Structure
 
 ```
-medi/
-├── app/
-│   ├── api/
-│   │   └── analyze-report/
-│   │       └── route.ts        # API endpoint for report analysis
-│   ├── dashboard/
-│   │   └── page.tsx           # Dashboard page with report viewer
-│   ├── upload/
-│   │   └── page.tsx           # Upload page for new reports
-│   ├── globals.css            # Global styles and Tailwind imports
-│   ├── layout.tsx             # Root layout with fonts and metadata
-│   └── page.tsx               # Landing page
-├── .env.local                 # Environment variables (create this)
-├── .env.example              # Example environment file
-├── tailwind.config.js         # Tailwind CSS configuration
-├── tsconfig.json              # TypeScript configuration
-└── package.json               # Dependencies and scripts
+app/
+├── api/
+│   ├── analyze-report/          # Upload + Gemini analysis (patient-only)
+│   ├── auth/                    # signup, login, logout, me
+│   ├── doctors/                 # list doctors (for the patient picker)
+│   ├── doctor/
+│   │   ├── reports/             # review queue + per-report feedback
+│   │   ├── patients/            # patient list, per-patient history, rehab tasks
+│   │   └── rehab-tasks/[id]/    # activate / deactivate a task
+│   ├── patient/                 # own reports, doctor selection, rehab tasks
+│   └── reports/[id]/file/       # authenticated original-document download
+├── dashboard/                   # split-pane report viewer
+├── doctor/                      # doctor dashboard + /doctor/patients
+├── patient/                     # patient dashboard
+├── upload/                      # upload page (login required)
+└── health-profile/              # the patient's own report history
+components/                      # AppNav, pickers, lists, charts, viewers
+lib/
+├── auth.ts                      # password hashing + session helpers
+├── prisma.ts                    # Prisma client singleton
+├── storage.ts                   # original-file storage on disk
+├── analytics.ts                 # test-value progression / trends
+└── dates.ts
+prisma/schema.prisma             # User, Session, Report, RehabTask, RehabCompletion
+storage/reports/                 # uploaded files (gitignored)
 ```
 
-## How It Works
+## Roles and access control
 
-### 1. Landing Page (`/`)
-- Marketing page with feature highlights
-- Call-to-action buttons to upload reports or view sample
-- Trust indicators and security features
+| Route | Who can access |
+|---|---|
+| `/`, `/login`, `/signup`, `/dashboard` | anyone (`/dashboard` shows sample data when not signed in) |
+| `/upload`, `/health-profile`, `/patient` | patients only |
+| `/doctor`, `/doctor/patients` | doctors only |
+| `POST /api/analyze-report` | patients only |
+| `GET /api/reports/[id]/file` | the owning patient, or the doctor the report was sent to |
 
-### 2. Upload Page (`/upload`)
-- Drag-and-drop file upload interface
-- Supports PDF, PNG, JPG, JPEG files (max 10MB)
-- Real-time file validation
-- Uploads file to Gemini API for analysis
-- Redirects to dashboard with results
+Signing in as the wrong role redirects to that role's own dashboard rather than erroring.
 
-### 3. Dashboard (`/dashboard`)
-- Split-pane layout:
-  - **Left**: Original medical report document preview
-  - **Right**: AI-generated summary with:
-    - Key findings with severity indicators
-    - Test results analysis
-    - Medication recommendations
-    - Questions to ask your doctor
-    - Overall health summary
-- Shows sample data if no report is uploaded
-- Shows uploaded report analysis when available
+## Data model
 
-## API Routes
+- **User** — email, bcrypt password hash, name, `PATIENT` or `DOCTOR`; patients have an
+  optional `doctorId`
+- **Session** — random token, expiry (7 days), stored server-side and referenced by cookie
+- **Report** — owning patient, assigned doctor, filename/mime/storage key for the original
+  file, the AI analysis as JSON, `PENDING`/`REVIEWED` status, and the doctor's feedback
+- **RehabTask** / **RehabCompletion** — assigned tasks and one completion row per task per day
 
-### POST `/api/analyze-report`
-
-Analyzes a medical report using Gemini AI.
-
-**Request**: 
-- Method: POST
-- Content-Type: multipart/form-data
-- Body: FormData with 'file' field
-
-**Response**:
-```json
-{
-  "success": true,
-  "fileName": "report.pdf",
-  "fileSize": 123456,
-  "analysis": {
-    "patientName": "John Doe",
-    "reportDate": "2024-01-15",
-    "reportType": "Blood Test",
-    "keyFindings": [...],
-    "testResults": [...],
-    "medications": [...],
-    "questions": [...],
-    "summary": "..."
-  }
-}
-```
+Uploaded files are written to `storage/reports/` (outside `public/`) and are only reachable
+through the authenticated route above. A report uploaded before file storage was added has no
+original on disk; the viewer says so instead of implying the rendered values are the source
+document.
 
 ## Customization
 
 ### Colors
 
-The color scheme can be customized in `tailwind.config.js`:
+Defined in `tailwind.config.js`:
 
 ```js
 colors: {
@@ -156,82 +157,76 @@ colors: {
 }
 ```
 
-### Gemini Model
+### Gemini model
 
-The server will first try the `gemini-2.5-flash` model, if your key doesn't have permissions for the preview model.  You can still change the model manually in `app/api/analyze-report/route.ts`:
+`app/api/analyze-report/route.ts` tries `gemini-3.6-flash` first and falls back to
+`gemini-2.5-flash`, then `gemini-1.5-flash`, if a model isn't available to your key:
 
 ```typescript
-let model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
-// …or pick another such as 'gemini-1.5-flash' or 'gemini-1.5-pro'
-```
-
-## Build for Production
-
-```bash
-npm run build
-npm start
+let model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' })
 ```
 
 ## Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GEMINI_API_KEY` | Your Google Gemini API key | Yes |
-
-## Security & Privacy
-
-- Reports are processed in real-time using Gemini AI
-- No reports are stored on the server permanently
-- Analysis results are stored in browser sessionStorage only
-- Files are validated for type and size before upload
-- All API routes use proper error handling
+- `npm run dev` — start the dev server
+- `npm run build` — production build (also type-checks and lints)
+- `npm start` — start the production server
+- `npm run lint` — run ESLint
+- `npx prisma studio` — browse the local database
 
 ## Supported File Types
 
-- **PDF**: `.pdf` (sent directly to the AI model; no local parsing required)
+- **PDF**: `.pdf` (sent directly to the model; no local parsing)
 - **Images**: `.png`, `.jpg`, `.jpeg`
-- **Max Size**: 10MB per file
+- **Max size**: 10MB, enforced both in the browser and on the server
 
 ## Troubleshooting
 
-### "Gemini API key not configured" error
-- Make sure you've created the `.env.local` file
-- Verify the API key is correctly set in `.env.local`
-- Restart the development server after adding the API key
+**"You must be logged in as a patient to upload a report"**
+Uploading requires a signed-in patient account. Doctors are redirected to their own dashboard.
 
-### File upload fails
-- Check file size (must be under 10MB)
-- Verify file type is PDF or image
-- Check browser console for errors
+**"Gemini API key not configured"**
+Check that `.env.local` exists and contains `GEMINI_API_KEY`, then restart the dev server —
+env files are only read at startup.
 
-### Analysis takes too long
-- Large PDF files may take 20-30 seconds to process
-- Try using a smaller file or image instead
-- Check your internet connection
+**"Model not available or not permitted for your key"**
+The configured Gemini model was rejected. The server automatically tries older models; if all
+fail, check the terminal for the underlying error, which is more specific than the UI message.
 
-## Future Enhancements
+**Analysis is slow**
+30–60 seconds is normal; large PDFs and rate-limited keys can take longer.
 
-- User authentication and report history
-- Support for more file formats
-- Multi-language support
-- Export analysis as PDF
-- Share reports securely with doctors
-- Dark mode support
+**`PrismaClientInitializationError: ... driver adapter is required`**
+Run `npx prisma generate`. Prisma 7 needs the generated client and the SQLite driver adapter.
+
+**Port 3000 in use**
+Next.js will offer the next free port, or free it with
+`lsof -ti:3000 | xargs kill`.
+
+## Limitations
+
+Known gaps, listed so they aren't mistaken for finished work:
+
+- **No encryption at rest** — the SQLite file and uploaded documents are stored unencrypted
+- **No CSRF protection** on state-changing requests, and **no rate limiting** on login
+- **No password reset or email verification**
+- **No automated test suite** — changes have been verified manually and with throwaway scripts
+- **No email delivery** — reports reach doctors through the dashboard only
+- **Symptoms and treatments aren't recorded** — the visit timeline shows AI-extracted lab
+  values and doctor feedback, not what the patient reported or what was prescribed
+- **Vitals** (BP, pulse, weight) can't be entered directly; charts only cover values the AI
+  extracted from uploaded reports
+- **No cross-report AI synthesis** — individual values get trend lines, but nothing narrates
+  how findings relate to each other
+- **SQLite only** — fine locally, but it would need Postgres and object storage to deploy
 
 ## License
 
-This project is for educational/demonstration purposes.
+For educational/demonstration purposes. Not a medical device, and not a substitute for
+professional medical advice.
 
 ## Acknowledgments
 
-- Design inspired by modern healthcare applications
 - Icons from Google Material Symbols
 - AI powered by Google Gemini
-- Built with Next.js and Tailwind CSS
+- Built with Next.js, Prisma, and Tailwind CSS
