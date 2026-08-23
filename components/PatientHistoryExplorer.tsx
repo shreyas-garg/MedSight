@@ -29,6 +29,7 @@ export default function PatientHistoryExplorer() {
   const [reports, setReports] = useState<ReportDetail[]>([])
   const [loadingPatients, setLoadingPatients] = useState(true)
   const [loadingReports, setLoadingReports] = useState(false)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     fetch('/api/doctor/patients')
@@ -42,13 +43,35 @@ export default function PatientHistoryExplorer() {
   }, [])
 
   useEffect(() => {
-    if (!selectedId) return
+    if (!selectedId) {
+      setReports([])
+      return
+    }
     setLoadingReports(true)
     fetch(`/api/doctor/patients/${selectedId}/reports`)
       .then((res) => res.json())
       .then((data) => setReports(data.reports || []))
       .finally(() => setLoadingReports(false))
   }, [selectedId])
+
+  const filteredPatients = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return patients
+    return patients.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
+    )
+  }, [patients, query])
+
+  useEffect(() => {
+    if (filteredPatients.length === 0) {
+      if (selectedId) setSelectedId('')
+      return
+    }
+    if (!filteredPatients.some((p) => p.id === selectedId)) {
+      setSelectedId(filteredPatients[0].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredPatients])
 
   const progressions = useMemo(() => buildTestProgressions(reports), [reports])
 
@@ -60,20 +83,34 @@ export default function PatientHistoryExplorer() {
 
   return (
     <div>
-      <label className="block text-sm font-semibold text-background-dark mb-2">Select a patient</label>
-      <select
-        value={selectedId}
-        onChange={(e) => setSelectedId(e.target.value)}
-        className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm mb-8 bg-white"
-      >
-        {patients.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name} ({p.email}) — {p.reportCount} report{p.reportCount === 1 ? '' : 's'}
-          </option>
-        ))}
-      </select>
+      <label className="block text-sm font-semibold text-background-dark mb-2">Search patients</label>
+      <div className="relative mb-4">
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, email, or patient ID"
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm"
+        />
+      </div>
 
-      {!loadingReports && progressions.length > 0 && (
+      {filteredPatients.length === 0 ? (
+        <p className="text-sm text-slate-custom mb-8">No patients match &quot;{query}&quot;.</p>
+      ) : (
+        <select
+          value={selectedId}
+          onChange={(e) => setSelectedId(e.target.value)}
+          className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none text-sm mb-8 bg-white"
+        >
+          {filteredPatients.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} ({p.email}) — {p.reportCount} report{p.reportCount === 1 ? '' : 's'}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {selectedId && !loadingReports && progressions.length > 0 && (
         <div className="mb-10">
           <h3 className="text-lg font-bold text-background-dark mb-1">Health Analytics</h3>
           <p className="text-sm text-slate-custom mb-4">Tracked values with more than one reading, oldest to latest.</p>
@@ -85,15 +122,17 @@ export default function PatientHistoryExplorer() {
         </div>
       )}
 
-      <div className="mb-10">
-        <RehabTaskManager patientId={selectedId} />
-      </div>
+      {selectedId && (
+        <div className="mb-10">
+          <RehabTaskManager patientId={selectedId} />
+        </div>
+      )}
 
-      {!loadingReports && reports.length > 0 && (
+      {selectedId && !loadingReports && reports.length > 0 && (
         <h3 className="text-lg font-bold text-background-dark mb-4">Visit Timeline</h3>
       )}
 
-      {loadingReports ? (
+      {!selectedId ? null : loadingReports ? (
         <p className="text-sm text-slate-custom">Loading history...</p>
       ) : reports.length === 0 ? (
         <p className="text-sm text-slate-custom">This patient hasn&apos;t submitted any reports yet.</p>
