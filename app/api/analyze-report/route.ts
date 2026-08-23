@@ -2,8 +2,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import { saveReportFile, deleteReportFile, isSupportedMimeType } from '@/lib/storage'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,6 +49,17 @@ export async function POST(request: NextRequest) {
       if (fileName.endsWith('.pdf')) mimeType = 'application/pdf'
       else if (fileName.endsWith('.png')) mimeType = 'image/png'
       else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) mimeType = 'image/jpeg'
+    }
+
+    // Enforce the same limits as the upload form, since the client can be bypassed
+    if (!isSupportedMimeType(mimeType)) {
+      return NextResponse.json(
+        { error: 'Unsupported file type. Please upload a PDF or image (PNG, JPG, JPEG).' },
+        { status: 400 }
+      )
+    }
+    if (buffer.byteLength > MAX_FILE_BYTES) {
+      return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 })
     }
 
     console.log('Processing file:', { name: file.name, type: mimeType, size: file.size })
@@ -196,16 +209,27 @@ Generate a similar comprehensive medical report analysis. For every entry in "te
       }
     }
 
-    // Persist the report so the patient's doctor can review it
-    const report = await prisma.report.create({
-      data: {
-        patientId: user.id,
-        doctorId: user.doctorId,
-        fileName: file.name,
-        fileSize: file.size,
-        analysisJson: JSON.stringify(analysisData),
-      },
-    })
+    // Keep the original document so the doctor can check the AI against the source
+    const storageKey = await saveReportFile(buffer, mimeType)
+
+    let report
+    try {
+      report = await prisma.report.create({
+        data: {
+          patientId: user.id,
+          doctorId: user.doctorId,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType,
+          storageKey,
+          analysisJson: JSON.stringify(analysisData),
+        },
+      })
+    } catch (dbError) {
+      // Don't leave the file behind with no row pointing at it
+      await deleteReportFile(storageKey)
+      throw dbError
+    }
 
     const doctor = user.doctorId
       ? await prisma.user.findUnique({ where: { id: user.doctorId }, select: { name: true } })

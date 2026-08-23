@@ -10,6 +10,7 @@ export async function GET() {
 
   const reports = await prisma.report.findMany({
     where: { patientId: user.id },
+    include: { doctor: { select: { name: true } } },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -21,6 +22,9 @@ export async function GET() {
       feedback: r.feedback,
       createdAt: r.createdAt,
       reviewedAt: r.reviewedAt,
+      hasFile: Boolean(r.storageKey),
+      mimeType: r.mimeType,
+      doctorName: r.doctor?.name ?? null,
       analysis: JSON.parse(r.analysisJson),
     })),
   })

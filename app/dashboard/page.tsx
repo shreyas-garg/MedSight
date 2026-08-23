@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AppNav from '@/components/AppNav'
+import OriginalDocument from '@/components/OriginalDocument'
 
 interface TestResult {
   testName: string
@@ -40,6 +41,8 @@ type ReviewStatus = {
   doctorName: string | null
   status: 'PENDING' | 'REVIEWED'
   feedback: string | null
+  hasFile: boolean
+  mimeType: string | null
 }
 
 export default function DashboardPage() {
@@ -71,7 +74,9 @@ export default function DashboardPage() {
             reportId: data.reportId,
             doctorName: data.doctorName ?? null,
             status: data.reportStatus ?? 'PENDING',
-            feedback: null,
+            feedback: data.feedback ?? null,
+            hasFile: data.hasFile ?? true,
+            mimeType: data.mimeType ?? null,
           })
         }
       } catch (err) {
@@ -95,7 +100,17 @@ export default function DashboardPage() {
       .then((data) => {
         const match = (data.reports || []).find((r: any) => r.id === review.reportId)
         if (match) {
-          setReview((prev) => (prev ? { ...prev, status: match.status, feedback: match.feedback } : prev))
+          setReview((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: match.status,
+                  feedback: match.feedback,
+                  hasFile: match.hasFile,
+                  mimeType: match.mimeType ?? null,
+                }
+              : prev
+          )
         }
       })
       .catch(() => {})
@@ -146,6 +161,7 @@ export default function DashboardPage() {
   }
 
   const displayFileName = fileName || 'Blood Test Summary - Oct 2023'
+  const hasStoredFile = Boolean(review?.reportId && review.hasFile)
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -189,39 +205,14 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-lg">attachment</span>
               Original Document
             </h3>
-            <div className="shrink-0 bg-white rounded-xl shadow-xl border border-stone-200 p-6 sm:p-12 min-h-[500px] lg:min-h-[1000px] mx-auto w-full max-w-[800px] relative">
-              {/* Simulated Medical Report UI */}
-              <div className="border-b-2 border-stone-100 pb-8 mb-8 flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-stone-800">City General Hospital</h2>
-                  <p className="text-stone-500 text-sm">Pathology & Laboratory Division</p>
-                </div>
-                <div className="text-right text-sm text-stone-500">
-                  <p>Date: {displayAnalysis.reportDate}</p>
-                  <p>Type: {displayAnalysis.reportType}</p>
-                </div>
-              </div>
-              <div className="space-y-6 min-w-0">
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs font-bold text-stone-400 border-b border-stone-100 pb-2">
-                  <div className="min-w-0">TEST NAME</div>
-                  <div className="min-w-0">RESULT</div>
-                  <div className="min-w-0">REFERENCE RANGE</div>
-                </div>
-                {displayAnalysis.testResults.map((test, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-2 sm:gap-4 text-sm items-center py-2 border-b border-stone-50">
-                    <div className="font-medium min-w-0 break-words">{test.testName}</div>
-                    <div className={`font-bold min-w-0 break-words ${
-                      test.status === 'low' ? 'text-red-600' :
-                      test.status === 'high' ? 'text-amber-600' :
-                      'text-stone-800'
-                    }`}>
-                      {test.result}
-                    </div>
-                    <div className="text-stone-500 min-w-0 break-words">{test.referenceRange}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <OriginalDocument
+              reportId={hasStoredFile ? review!.reportId : null}
+              mimeType={review?.mimeType ?? null}
+              fileName={displayFileName}
+              testResults={displayAnalysis.testResults}
+              reportDate={displayAnalysis.reportDate}
+              reportType={displayAnalysis.reportType}
+            />
           </div>
 
           {/* Right Pane: AI Summary */}

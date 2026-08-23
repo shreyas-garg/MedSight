@@ -18,6 +18,10 @@ interface PatientReport {
   id: string
   fileName: string
   status: 'PENDING' | 'REVIEWED'
+  feedback: string | null
+  hasFile: boolean
+  mimeType: string | null
+  doctorName: string | null
   analysis: ReportAnalysis
 }
 
@@ -33,7 +37,19 @@ export default function HealthProfileView() {
   }, [])
 
   const viewDetailed = (r: PatientReport) => {
-    sessionStorage.setItem('reportAnalysis', JSON.stringify({ analysis: r.analysis, fileName: r.fileName }))
+    sessionStorage.setItem(
+      'reportAnalysis',
+      JSON.stringify({
+        analysis: r.analysis,
+        fileName: r.fileName,
+        reportId: r.id,
+        reportStatus: r.status,
+        feedback: r.feedback,
+        hasFile: r.hasFile,
+        mimeType: r.mimeType,
+        doctorName: r.doctorName,
+      })
+    )
     window.location.href = '/dashboard'
   }
 
