@@ -27,6 +27,8 @@ export async function GET(_request: Request, { params }: { params: { id: string 
       feedback: r.feedback,
       createdAt: r.createdAt,
       reviewedAt: r.reviewedAt,
+      hasFile: Boolean(r.storageKey),
+      mimeType: r.mimeType,
       analysis: JSON.parse(r.analysisJson),
     })),
   })

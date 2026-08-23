@@ -60,6 +60,9 @@ model Report {
   doctor       User?        @relation("DoctorReports", fields: [doctorId], references: [id])
   fileName     String
   fileSize     Int
+  // Set for reports uploaded after original-file storage was added.
+  mimeType     String?
+  storageKey   String?
   analysisJson String
   status       ReportStatus @default(PENDING)
   feedback     String?

@@ -15,6 +15,7 @@ type ReportDetail = {
   status: 'PENDING' | 'REVIEWED'
   feedback: string | null
   createdAt: string
+  hasFile: boolean
   analysis: {
     reportType?: string
     summary?: string
@@ -159,6 +160,18 @@ export default function PatientHistoryExplorer() {
                 </div>
 
                 {r.analysis?.summary && <p className="text-sm text-slate-600 mt-2">{r.analysis.summary}</p>}
+
+                {r.hasFile && (
+                  <a
+                    href={`/api/reports/${r.id}/file`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-3 text-sm font-bold text-primary hover:underline"
+                  >
+                    <span className="material-symbols-outlined text-lg">description</span>
+                    View original document
+                  </a>
+                )}
 
                 {r.analysis?.testResults && r.analysis.testResults.length > 0 && (
                   <div className="mt-4 overflow-x-auto">

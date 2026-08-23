@@ -8,6 +8,7 @@ type DoctorReport = {
   status: 'PENDING' | 'REVIEWED'
   feedback: string | null
   createdAt: string
+  hasFile: boolean
   analysis: { reportType?: string; summary?: string }
   patient: { id: string; name: string; email: string }
 }
@@ -92,6 +93,28 @@ return (
 
           {r.analysis?.summary && <p className="text-sm text-slate-600 mt-2">{r.analysis.summary}</p>}
 
+          <div className="flex items-center gap-5 flex-wrap mt-3">
+            {r.hasFile && (
+              <a
+                href={`/api/reports/${r.id}/file`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+              >
+                <span className="material-symbols-outlined text-lg">description</span>
+                View original document
+              </a>
+            )}
+            {r.status !== 'REVIEWED' && expandedId !== r.id && (
+              <button
+                onClick={() => setExpandedId(r.id)}
+                className="text-sm font-bold text-primary hover:underline"
+              >
+                Give feedback
+              </button>
+            )}
+          </div>
+
           {r.status === 'REVIEWED' ? (
             <div className="mt-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1">Your Feedback</p>
@@ -125,14 +148,7 @@ return (
                 </button>
               </div>
             </div>
-          ) : (
-            <button
-              onClick={() => setExpandedId(r.id)}
-              className="mt-3 text-sm font-bold text-primary hover:underline"
-            >
-              Give feedback
-            </button>
-          )}
+          ) : null}
         </div>
           ))}
         </div>
