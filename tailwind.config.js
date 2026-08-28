@@ -10,6 +10,9 @@ module.exports = {
     extend: {
       colors: {
         'primary': '#37ec13',
+        // Bright green fails contrast as text on light backgrounds - use this
+        // darker shade wherever the brand colour has to carry text.
+        'primary-dark': '#1a7a08',
         'background-light': '#f6f8f6',
         'background-dark': '#132210',
         'slate-custom': '#475569',
