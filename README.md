@@ -9,7 +9,11 @@ MedSight is a modern web application that helps patients understand their medica
 - 🤖 **AI Analysis**: Powered by Google Gemini AI to analyze medical reports
 - 📊 **Dashboard**: Split-pane interface showing original medical reports alongside AI-generated summaries
 - 🎨 **Modern UI**: Built with Tailwind CSS featuring a clean, accessible design
-- 🔒 **Privacy First**: Reports are processed in real-time and not stored permanently
+- 📈 **Health Profile**: Past analyses kept in your browser's localStorage
+- 📄 **PDF Export**: "Share with Doctor" downloads a one-page summary to send or print
+- ✅ **Doctor Checklist**: Tick off questions as you ask them, or copy them all at once
+- 🌗 **Dark Mode**: Follows your OS by default, with a toggle that remembers your choice
+- 🔒 **No Server Storage**: Reports are analysed in-request and never written to a database
 - ⚡ **Fast**: Built with Next.js 14 and App Router for optimal performance
 
 ## Tech Stack
@@ -17,7 +21,8 @@ MedSight is a modern web application that helps patients understand their medica
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-* **AI**: Google Generative AI (Gemini)
+- **AI**: Google Generative AI (Gemini 2.5 Flash, falling back to 2.0 Flash)
+- **PDF Export**: jsPDF
 - **Icons**: Google Material Symbols
 - **Font**: Inter (Google Fonts)
 
@@ -70,15 +75,24 @@ medi/
 │   ├── api/
 │   │   └── analyze-report/
 │   │       └── route.ts        # API endpoint for report analysis
+│   ├── components/
+│   │   ├── Sidebar.tsx        # Shared app nav (dashboard + health profile)
+│   │   ├── SampleDocument.tsx # Rendered sample lab report
+│   │   └── ThemeToggle.tsx    # Light/dark switch
+│   ├── lib/
+│   │   └── sample-report.ts   # Sample data + shared report types
 │   ├── dashboard/
-│   │   └── page.tsx           # Dashboard page with report viewer
+│   │   └── page.tsx           # Dashboard: original document + AI summary
+│   ├── health-profile/
+│   │   └── page.tsx           # History of past analyses (localStorage)
 │   ├── upload/
 │   │   └── page.tsx           # Upload page for new reports
 │   ├── globals.css            # Global styles and Tailwind imports
 │   ├── layout.tsx             # Root layout with fonts and metadata
 │   └── page.tsx               # Landing page
+├── utils/
+│   └── pdf.ts                 # jsPDF summary export
 ├── .env.local                 # Environment variables (create this)
-├── .env.example              # Example environment file
 ├── tailwind.config.js         # Tailwind CSS configuration
 ├── tsconfig.json              # TypeScript configuration
 └── package.json               # Dependencies and scripts
@@ -88,8 +102,7 @@ medi/
 
 ### 1. Landing Page (`/`)
 - Marketing page with feature highlights
-- Call-to-action buttons to upload reports or view sample
-- Trust indicators and security features
+- Call-to-action buttons to upload a report or view the sample
 
 ### 2. Upload Page (`/upload`)
 - Drag-and-drop file upload interface
@@ -100,15 +113,26 @@ medi/
 
 ### 3. Dashboard (`/dashboard`)
 - Split-pane layout:
-  - **Left**: Original medical report document preview
-  - **Right**: AI-generated summary with:
-    - Key findings with severity indicators
-    - Test results analysis
-    - Medication recommendations
-    - Questions to ask your doctor
-    - Overall health summary
-- Shows sample data if no report is uploaded
-- Shows uploaded report analysis when available
+  - **Left**: your actual uploaded file — images render with zoom controls, PDFs in
+    the browser's built-in viewer. The file is cached in `sessionStorage` for the
+    session only, so opening an older analysis from the Health Profile shows a
+    placeholder rather than the wrong document.
+  - **Right**: AI-generated summary with key findings (colour-coded by severity),
+    the test-results table, medications named in the report, questions to ask your
+    doctor, and a medical disclaimer.
+- **Sample mode**: with nothing uploaded, *both* panes show the same fictional
+  patient — a rendered sample lab report on the left and its summary on the right,
+  with a banner and badges making clear it is not your data. The sample document and
+  the sample summary are generated from one object in `app/lib/sample-report.ts`, so
+  they cannot drift apart.
+- **Questions for your Doctor** is a working checklist: tick items off during the
+  appointment (with a running count), or copy them all to the clipboard
+- **Share with Doctor** exports the summary as a paginated PDF
+
+### 4. Health Profile (`/health-profile`)
+- Lists every report analysed in this browser (`localStorage`, key `healthReports`)
+- Re-opens any past analysis in the dashboard
+- Clearing browser data clears this history — it is not synced anywhere
 
 ## API Routes
 
@@ -140,6 +164,15 @@ Analyzes a medical report using Gemini AI.
 }
 ```
 
+## Dark Mode
+
+Tailwind's `darkMode: 'class'` strategy. A small inline script in `app/layout.tsx`
+applies the stored or system theme **before first paint**, so there is no flash of the
+wrong colours on load. `ThemeToggle` reads the `dark` class off `<html>` rather than
+re-deriving it, keeping the button and the page in sync, and writes an explicit choice
+to `localStorage`. With no explicit choice stored the app follows the OS and keeps
+following it if the OS setting changes mid-session.
+
 ## Customization
 
 ### Colors
@@ -149,6 +182,7 @@ The color scheme can be customized in `tailwind.config.js`:
 ```js
 colors: {
   'primary': '#37ec13',              // Main brand color (green)
+  'primary-dark': '#1a7a08',         // Same brand color, readable as text on light
   'background-light': '#f6f8f6',     // Light mode background
   'background-dark': '#132210',      // Dark mode background
   'slate-custom': '#475569',         // Custom slate
@@ -158,12 +192,18 @@ colors: {
 
 ### Gemini Model
 
-The server will first try the `gemini-2.5-flash` model, if your key doesn't have permissions for the preview model.  You can still change the model manually in `app/api/analyze-report/route.ts`:
+The route tries `gemini-2.5-flash` and falls back to `gemini-2.0-flash` if the first
+model is unavailable for your key. Both are set at the top of
+`app/api/analyze-report/route.ts`:
 
 ```typescript
-let model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
-// …or pick another such as 'gemini-1.5-flash' or 'gemini-1.5-pro'
+const PRIMARY_MODEL = 'gemini-2.5-flash'
+const FALLBACK_MODEL = 'gemini-2.0-flash'
 ```
+
+The prompt describes only the **output schema** and instructs the model to use values
+from the attached file exclusively. Do not add filled-in example values to it — the
+model will echo them back instead of reading the report.
 
 ## Build for Production
 
@@ -172,8 +212,31 @@ npm run build
 npm start
 ```
 
+## Before a Demo
+
+Run the preflight check — it calls Gemini exactly the way the upload route does, so
+whatever it reports is what your audience will see:
+
+```bash
+npm run check-api
+```
+
+`Ready.` means uploads will work. Anything else means the upload flow will fail, and
+the message tells you why. The common one is:
+
+> `403 Your project has been denied access`
+
+That is the API key's Google Cloud project being blocked — no code change fixes it.
+Generate a fresh key at https://aistudio.google.com/apikey, put it in `.env.local`,
+restart the dev server and re-run the check.
+
+If the AI is unavailable at demo time, **/dashboard still works completely offline** —
+it shows the full sample report with no API call, and the upload page offers a link to
+it when an analysis fails.
+
 ## Scripts
 
+- `npm run check-api` - Verify the Gemini key works (run this before presenting)
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm start` - Start production server
@@ -187,11 +250,22 @@ npm start
 
 ## Security & Privacy
 
-- Reports are processed in real-time using Gemini AI
-- No reports are stored on the server permanently
-- Analysis results are stored in browser sessionStorage only
-- Files are validated for type and size before upload
-- All API routes use proper error handling
+- Reports are sent to Google's Gemini API for analysis and are subject to Google's
+  data-handling terms — read those before uploading real patient data
+- Nothing is written to a server-side database; there is no backend storage at all
+- The uploaded file lives in `sessionStorage`; analyses live in `localStorage`. Both
+  are on the user's device, unencrypted, and readable by anything with access to that
+  browser profile
+- Files are validated for type and size (10MB) before upload
+- There is **no authentication**. Anyone who can reach the deployment can use the
+  API key configured on the server. Add auth and rate limiting before deploying
+  publicly
+
+## Not Medical Advice
+
+MedSight produces AI-generated summaries for education and appointment preparation.
+It is not a medical device, does not provide diagnosis, and can be wrong. Every
+finding should be confirmed with a qualified clinician.
 
 ## Supported File Types
 

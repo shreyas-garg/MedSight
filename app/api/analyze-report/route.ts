@@ -41,77 +41,57 @@ export async function POST(request: NextRequest) {
 
     console.log('Processing file:', { name: file.name, type: mimeType, size: file.size })
 
-    // Initialize Gemini model - start with preview model but fall back if unavailable
-    let model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    // Models are tried in order. Google retires Gemini versions and closes older
+    // ones to new API keys, so keep a current model first and a floating alias last.
+    // Tried in order. Flash models first (these carry free-tier quota); the pro
+    // model last, because it has zero free-tier quota and only works on a project
+    // with billing enabled. Google also retires versions and closes older ones to
+    // new keys, so keep a floating alias in the list.
+    const MODEL_CHAIN = [
+      'gemini-3.6-flash',
+      'gemini-3.5-flash',
+      'gemini-3.7-flash',
+      'gemini-flash-latest',
+      'gemini-pro-latest',
+    ]
 
-    // Build prompt for the report (PDF or image) and send file content
-    const prompt = `You are a medical assistant AI. Analyze the medical report in the provided file and provide a comprehensive summary in the following JSON format:
+    // Build prompt: describe the OUTPUT SCHEMA only, never an example analysis.
+    // Filling the prompt with populated sample values makes the model echo them
+    // back instead of reading the attached report.
+    const prompt = `You are a medical assistant AI. Read ONLY the medical report in the attached file and summarise it for the patient in plain language.
+
+Return a single JSON object with exactly these keys:
 
 {
-  "patientName": "Alex Rivera",
-  "reportDate": "2024-01-15",
-  "reportType": "Blood Test Summary",
-  "keyFindings": [
+  "patientName": string  - the patient name printed on the report, or "Not stated" if absent,
+  "reportDate": string   - the report/collection date as printed, or "Not stated",
+  "reportType": string   - e.g. "Complete Blood Count", "MRI Brain", "Lipid Profile",
+  "keyFindings": [       - one entry per notable finding, most important first
     {
-      "severity": "warning",
-      "icon": "info",
-      "color": "amber-500",
-      "description": "Vitamin D levels are slightly below optimal range, which could contribute to fatigue."
-    },
-    {
-      "severity": "critical",
-      "icon": "warning",
-      "color": "red-500",
-      "description": "Hemoglobin is low (11.2 g/dL), suggesting mild anemia that may cause tiredness."
-    },
-    {
-      "severity": "normal",
-      "icon": "check_circle",
-      "color": "primary",
-      "description": "Cholesterol and WBC counts are within healthy ranges."
+      "severity": "normal" | "warning" | "critical",
+      "description": string - plain-English explanation of what this means for the patient
     }
   ],
-  "testResults": [
+  "testResults": [       - every measured value present in the report
     {
-      "testName": "Hemoglobin (Hb)",
-      "result": "11.2 g/dL",
-      "referenceRange": "13.5 - 17.5 g/dL",
-      "status": "low"
-    },
-    {
-      "testName": "WBC Count",
-      "result": "7.4 x10^9/L",
-      "referenceRange": "4.5 - 11.0 x10^9/L",
-      "status": "normal"
-    },
-    {
-      "testName": "Vitamin D, 25-OH",
-      "result": "22 ng/mL",
-      "referenceRange": "30 - 100 ng/mL",
-      "status": "low"
+      "testName": string,
+      "result": string          - value with units, exactly as printed,
+      "referenceRange": string   - as printed, or "Not stated",
+      "status": "normal" | "low" | "high"
     }
   ],
-  "medications": [
-    {
-      "name": "Vitamin D3 (2000 IU)",
-      "dosage": "Daily",
-      "purpose": "To normalize vitamin D levels and reduce fatigue."
-    },
-    {
-      "name": "Ferrous Sulfate",
-      "dosage": "As prescribed",
-      "purpose": "Iron supplement to address mild anemia."
-    }
+  "medications": [       - only medications or supplements named in the report itself
+    { "name": string, "dosage": string, "purpose": string }
   ],
-  "questions": [
-    "Is my anemia diet-related or due to another underlying cause?",
-    "When should I retest my Vitamin D levels?",
-    "What iron-rich foods should I prioritize in my meals?"
-  ],
-  "summary": "The report shows some areas needing attention, particularly low Vitamin D and Hemoglobin levels, while cholesterol and WBC counts are healthy."
+  "questions": [string]  - 3 to 5 questions this patient should ask their doctor,
+  "summary": string      - 2 to 3 sentence overview
 }
 
-Generate a similar comprehensive medical report analysis. Respond ONLY with the JSON object, no other text.`
+Rules:
+- Use ONLY values that appear in the attached file. Never invent a name, date, test, value or reference range.
+- If the file contains no medications, return an empty array. Do not suggest treatments the report does not mention.
+- If the file is unreadable or is not a medical report, return keyFindings with a single "warning" entry saying so, and empty testResults and medications.
+- Respond with the JSON object only. No markdown fences, no commentary.`
 
     const imagePart = {
       inlineData: {
@@ -121,22 +101,27 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
     }
 
     let result
-    try {
-      result = await model.generateContent([prompt, imagePart])
-    } catch (firstErr: any) {
-      console.warn('First generation attempt failed', firstErr.message)
-      // if failure seems related to unavailable model, try a smaller one
-      if (firstErr.message?.toLowerCase().includes('model')) {
-        try {
-          model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-          result = await model.generateContent([prompt, imagePart])
-        } catch (secondErr: any) {
-          // propagate original error if fallback also fails
-          throw secondErr
+    let lastError: any
+    for (const modelName of MODEL_CHAIN) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName })
+        result = await model.generateContent([prompt, imagePart])
+        lastError = undefined
+        break
+      } catch (err: any) {
+        lastError = err
+        console.warn(`Model ${modelName} failed:`, err.message)
+        // An invalid key fails identically on every model, so stop early. Quota
+        // and permission errors are per-model, so keep going down the chain.
+        const msg = (err.message || '').toLowerCase()
+        if (msg.includes('api key not valid') || msg.includes('api_key_invalid')) {
+          break
         }
-      } else {
-        throw firstErr
       }
+    }
+
+    if (!result) {
+      throw lastError ?? new Error('No Gemini model was able to process this file')
     }
 
     const response = result.response
@@ -158,10 +143,8 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
         reportType: "Medical Report",
         keyFindings: [
           {
-            severity: "normal",
-            icon: "check_circle",
-            color: "primary",
-            description: "Unable to extract detailed findings from the image. Please ensure the image is clear and readable."
+            severity: "warning",
+            description: "Unable to extract detailed findings from this file. Please ensure the report is clear and readable."
           }
         ],
         testResults: [],
@@ -172,6 +155,19 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
         ],
         summary: "The AI had difficulty reading the report. Please try uploading a clearer image or contact support."
       }
+    }
+
+    // Normalise the shape so the UI can render it without defensive checks
+    const asArray = (v: any) => (Array.isArray(v) ? v : [])
+    analysisData = {
+      patientName: analysisData?.patientName || 'Not stated',
+      reportDate: analysisData?.reportDate || 'Not stated',
+      reportType: analysisData?.reportType || 'Medical Report',
+      keyFindings: asArray(analysisData?.keyFindings),
+      testResults: asArray(analysisData?.testResults),
+      medications: asArray(analysisData?.medications),
+      questions: asArray(analysisData?.questions),
+      summary: analysisData?.summary || '',
     }
 
     // Return the analysis
@@ -195,9 +191,10 @@ Generate a similar comprehensive medical report analysis. Respond ONLY with the 
     if (error.message?.includes('API key')) {
       errorMessage = 'Invalid or missing API key. Please check your Gemini API configuration.'
     } else if (error.message?.includes('quota') || error.message?.includes('limit')) {
-      errorMessage = 'API quota exceeded. Please try again later or upgrade your API plan.'
+      errorMessage =
+        'Every available model is out of quota. Free-tier limits reset daily; run `npm run check-api` for details.'
     } else if (error.message?.includes('model')) {
-      errorMessage = 'Model not available or not permitted for your key. Please verify that your API key has access to the selected Gemini model or switch to a different model.'
+      errorMessage = 'No available Gemini model could process this report. Your API key may not have access to the models listed in MODEL_CHAIN - check app/api/analyze-report/route.ts.'
     }
     
     return NextResponse.json(
