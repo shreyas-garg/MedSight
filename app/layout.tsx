@@ -21,13 +21,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        {/* Applies an explicitly chosen theme before first paint. Deliberately
-            does NOT follow the OS setting: the doctor/patient portal is not yet
-            styled for dark mode, so defaulting everyone to light is the only
-            consistent experience. */}
+        {/* The app is light-only for now (the portal is not styled for dark
+            mode). An earlier build let users store a dark preference; clear it
+            so nobody is stuck with white-on-white text from that leftover. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}})()`,
+            __html: `(function(){try{localStorage.removeItem('theme');document.documentElement.classList.remove('dark')}catch(e){}})()`,
           }}
         />
         <link
@@ -35,7 +34,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-background-light dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased font-display transition-colors">
+      <body className="bg-background-light text-slate-900 antialiased font-display">
         {children}
       </body>
     </html>

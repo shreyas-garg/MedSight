@@ -239,7 +239,7 @@ export default function DashboardPage() {
                         ) : (
                           <p className="text-sm text-slate-600 mt-1">
                             Your doctor hasn&apos;t reviewed this yet.{' '}
-                            <Link href="/patient" className="text-primary font-semibold hover:underline">
+                            <Link href="/patient" className="text-primary-dark font-semibold hover:underline">
                               Check status in My Reports
                             </Link>
                           </p>
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                     ) : (
                       <p className="text-sm text-slate-700">
                         This report was saved to your account, but you haven&apos;t connected with a doctor yet.{' '}
-                        <Link href="/patient" className="text-primary font-semibold hover:underline">
+                        <Link href="/patient" className="text-primary-dark font-semibold hover:underline">
                           Connect with a doctor
                         </Link>{' '}
                         so they can review it.

@@ -50,7 +50,7 @@ function statusClasses(status?: string) {
     case 'high':
       return 'bg-amber-100 text-amber-700'
     default:
-      return 'bg-primary/10 text-primary'
+      return 'bg-primary/10 text-primary-dark'
   }
 }
 
@@ -113,7 +113,7 @@ export default function ReportAnalysisPanel({
     <div className="w-full lg:w-1/2 p-4 sm:p-8 lg:overflow-y-auto custom-scrollbar bg-white flex flex-col">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-8">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-primary font-semibold mb-1">
+          <div className="flex items-center gap-2 text-primary-dark font-semibold mb-1">
             <span className="material-symbols-outlined">auto_awesome</span>
             <span>AI Powered Analysis</span>
           </div>
@@ -261,7 +261,7 @@ export default function ReportAnalysisPanel({
                   </span>
                   <button
                     onClick={copyQuestions}
-                    className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-primary transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-primary-dark transition-colors"
                   >
                     <span className="material-symbols-outlined text-base">
                       {copied ? 'check' : 'content_copy'}

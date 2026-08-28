@@ -38,7 +38,7 @@ export default function OriginalDocument({
             href={fileUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-xs font-bold text-primary hover:underline whitespace-nowrap shrink-0"
+            className="text-xs font-bold text-primary-dark hover:underline whitespace-nowrap shrink-0"
           >
             Open full size
           </a>
@@ -46,7 +46,7 @@ export default function OriginalDocument({
         <object data={fileUrl} type="application/pdf" className="w-full h-[900px]">
           <div className="p-8 text-center">
             <p className="text-sm text-stone-600 mb-3">This browser can&apos;t display the PDF inline.</p>
-            <a href={fileUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-primary hover:underline">
+            <a href={fileUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-primary-dark hover:underline">
               Open the original PDF
             </a>
           </div>
@@ -64,7 +64,7 @@ export default function OriginalDocument({
             href={fileUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-xs font-bold text-primary hover:underline whitespace-nowrap shrink-0"
+            className="text-xs font-bold text-primary-dark hover:underline whitespace-nowrap shrink-0"
           >
             Open full size
           </a>

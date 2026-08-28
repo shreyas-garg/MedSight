@@ -154,14 +154,14 @@ export default function PatientHistoryExplorer({
               <div className="border border-slate-200 rounded-xl p-5">
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <div>
-                    <p className="text-xs font-bold text-primary uppercase tracking-wide mb-0.5">
+                    <p className="text-xs font-bold text-primary-dark uppercase tracking-wide mb-0.5">
                       Visit {i + 1} • {new Date(r.createdAt).toLocaleDateString('en-US')}
                     </p>
                     <p className="font-bold text-background-dark text-sm">{r.analysis?.reportType || r.fileName}</p>
                   </div>
                   <span
                     className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                      r.status === 'REVIEWED' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'
+                      r.status === 'REVIEWED' ? 'bg-primary/10 text-primary-dark' : 'bg-amber-100 text-amber-700'
                     }`}
                   >
                     {r.status === 'REVIEWED' ? 'Reviewed' : 'Pending review'}
@@ -173,7 +173,7 @@ export default function PatientHistoryExplorer({
                 <div className="flex items-center gap-5 flex-wrap mt-3">
                   <Link
                     href={`/doctor/reports/${r.id}`}
-                    className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-dark hover:underline"
                   >
                     <span className="material-symbols-outlined text-lg">open_in_full</span>
                     Open full report
@@ -183,7 +183,7 @@ export default function PatientHistoryExplorer({
                       href={`/api/reports/${r.id}/file`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                      className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-dark hover:underline"
                     >
                       <span className="material-symbols-outlined text-lg">description</span>
                       Original document
@@ -215,7 +215,7 @@ export default function PatientHistoryExplorer({
                                     ? 'text-amber-600'
                                     : t.status === 'critical'
                                     ? 'text-red-600'
-                                    : 'text-primary'
+                                    : 'text-primary-dark'
                                 }`}
                               >
                                 {t.status}
@@ -230,7 +230,7 @@ export default function PatientHistoryExplorer({
 
                 {r.feedback && (
                   <div className="mt-4 bg-primary/5 border border-primary/20 rounded-lg p-3">
-                    <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1">Your Feedback</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-primary-dark mb-1">Your Feedback</p>
                     <p className="text-sm text-slate-700">{r.feedback}</p>
                   </div>
                 )}

@@ -84,7 +84,7 @@ export default function HealthProfileView() {
               </div>
               <p className="text-sm text-stone-700 mb-2">{r.analysis?.summary}</p>
               <button
-                className="text-sm font-semibold text-primary hover:underline"
+                className="text-sm font-semibold text-primary-dark hover:underline"
                 onClick={() => viewDetailed(r)}
               >
                 View Detailed Analysis

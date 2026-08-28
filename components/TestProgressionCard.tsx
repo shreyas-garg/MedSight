@@ -30,7 +30,7 @@ export default function TestProgressionCard({ progression }: { progression: Test
   const pathD = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(' ')
 
   const trendIcon = trend === 'up' ? 'trending_up' : trend === 'down' ? 'trending_down' : 'trending_flat'
-  const trendColor = trend === 'flat' ? 'text-slate-400' : latestStatus === 'normal' ? 'text-primary' : 'text-amber-600'
+  const trendColor = trend === 'flat' ? 'text-slate-400' : latestStatus === 'normal' ? 'text-primary-dark' : 'text-amber-600'
 
   return (
     <div className="border border-slate-200 rounded-xl p-5">

@@ -39,7 +39,7 @@ export default function PatientReportsList() {
             </div>
             <span
               className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                r.status === 'REVIEWED' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'
+                r.status === 'REVIEWED' ? 'bg-primary/10 text-primary-dark' : 'bg-amber-100 text-amber-700'
               }`}
             >
               {r.status === 'REVIEWED' ? 'Reviewed' : 'Pending review'}
@@ -47,7 +47,7 @@ export default function PatientReportsList() {
           </div>
           {r.feedback && (
             <div className="mt-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1">Doctor&apos;s Feedback</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-primary-dark mb-1">Doctor&apos;s Feedback</p>
               <p className="text-sm text-slate-700">{r.feedback}</p>
             </div>
           )}

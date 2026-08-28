@@ -85,7 +85,7 @@ return (
             </div>
             <span
               className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                r.status === 'REVIEWED' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'
+                r.status === 'REVIEWED' ? 'bg-primary/10 text-primary-dark' : 'bg-amber-100 text-amber-700'
               }`}
             >
               {r.status === 'REVIEWED' ? 'Reviewed' : 'Pending review'}
@@ -97,7 +97,7 @@ return (
           <div className="flex items-center gap-5 flex-wrap mt-3">
             <Link
               href={`/doctor/reports/${r.id}`}
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-dark hover:underline"
             >
               <span className="material-symbols-outlined text-lg">open_in_full</span>
               Open full report
@@ -107,7 +107,7 @@ return (
                 href={`/api/reports/${r.id}/file`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-dark hover:underline"
               >
                 <span className="material-symbols-outlined text-lg">description</span>
                 Original document
@@ -116,7 +116,7 @@ return (
             {r.status !== 'REVIEWED' && expandedId !== r.id && (
               <button
                 onClick={() => setExpandedId(r.id)}
-                className="text-sm font-bold text-primary hover:underline"
+                className="text-sm font-bold text-primary-dark hover:underline"
               >
                 Quick feedback
               </button>
@@ -125,7 +125,7 @@ return (
 
           {r.status === 'REVIEWED' ? (
             <div className="mt-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-primary mb-1">Your Feedback</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-primary-dark mb-1">Your Feedback</p>
               <p className="text-sm text-slate-700">{r.feedback}</p>
             </div>
           ) : expandedId === r.id ? (

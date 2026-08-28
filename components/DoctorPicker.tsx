@@ -90,7 +90,7 @@ export default function DoctorPicker({
         {currentDoctorId && (
           <button
             onClick={() => setChanging((v) => !v)}
-            className="flex items-center gap-1.5 text-sm font-bold text-primary hover:underline whitespace-nowrap"
+            className="flex items-center gap-1.5 text-sm font-bold text-primary-dark hover:underline whitespace-nowrap"
           >
             <span className="material-symbols-outlined text-lg">{changing ? 'close' : 'swap_horiz'}</span>
             {changing ? 'Cancel' : 'Change doctor'}
@@ -135,7 +135,7 @@ export default function DoctorPicker({
                       </div>
                     </div>
                     {isCurrent ? (
-                      <span className="text-xs font-bold text-primary shrink-0">Current</span>
+                      <span className="text-xs font-bold text-primary-dark shrink-0">Current</span>
                     ) : (
                       <span className="material-symbols-outlined text-slate-400 shrink-0">chevron_right</span>
                     )}

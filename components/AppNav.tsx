@@ -14,7 +14,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
     <Link
       href={href}
       className={`text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
-        active ? 'text-primary' : 'text-slate-custom hover:text-background-dark'
+        active ? 'text-primary-dark font-bold' : 'text-slate-custom hover:text-background-dark'
       }`}
     >
       {children}

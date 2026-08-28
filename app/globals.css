@@ -3,8 +3,22 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Force light form controls and scrollbars even when the OS is in dark
+       mode - the app has no dark theme, and browser-default dark controls
+       produce white text in light inputs. */
+    color-scheme: light;
+  }
   body {
     @apply font-display;
+  }
+  /* Every text control in the app gets explicit colors. Without these, inputs
+     inherit whatever the surrounding context or the browser's dark form
+     styling provides - which is how signup ended up with white-on-white. */
+  input,
+  textarea,
+  select {
+    @apply bg-white text-background-dark placeholder:text-stone-400 caret-primary-dark;
   }
 }
 

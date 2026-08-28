@@ -13,7 +13,7 @@ export default function HomePage() {
             <h1 className="text-2xl font-black tracking-tight text-background-dark dark:text-white">MedSight</h1>
           </div>
           <div className="hidden md:flex items-center gap-10">
-            <a className="text-sm font-semibold text-slate-custom hover:text-primary transition-colors" href="#how-it-works">How it Works</a>
+            <a className="text-sm font-semibold text-slate-custom hover:text-primary-dark transition-colors" href="#how-it-works">How it Works</a>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login">
@@ -36,7 +36,7 @@ export default function HomePage() {
               {/* Trust badge removed */}
               <h1 className="text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-balance text-background-dark dark:text-white">
                 Be OPD ready <br />
-                <span className="text-primary italic">before</span> you step in
+                <span className="text-primary-dark dark:text-primary italic">before</span> you step in
               </h1>
               <p className="text-lg lg:text-xl text-slate-custom dark:text-slate-300 leading-relaxed max-w-xl">
                 Stop googling every symptom. MedSight turns complex medical jargon into clear, actionable summaries so you can have better conversations with your doctor.
@@ -203,16 +203,16 @@ export default function HomePage() {
           <div>
             <h4 className="font-bold text-background-dark dark:text-white mb-6 uppercase text-xs tracking-widest">Product</h4>
             <ul className="flex flex-col gap-4 text-sm text-slate-custom dark:text-slate-400">
-              <li><a className="hover:text-primary transition-colors" href="#how-it-works">How it works</a></li>
-              <li><Link className="hover:text-primary transition-colors" href="/upload">Upload a Report</Link></li>
-              <li><Link className="hover:text-primary transition-colors" href="/dashboard">Sample Report</Link></li>
+              <li><a className="hover:text-primary-dark transition-colors" href="#how-it-works">How it works</a></li>
+              <li><Link className="hover:text-primary-dark transition-colors" href="/upload">Upload a Report</Link></li>
+              <li><Link className="hover:text-primary-dark transition-colors" href="/dashboard">Sample Report</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-bold text-background-dark dark:text-white mb-6 uppercase text-xs tracking-widest">Get Started</h4>
             <ul className="flex flex-col gap-4 text-sm text-slate-custom dark:text-slate-400">
-              <li><Link className="hover:text-primary transition-colors" href="/signup">Create an account</Link></li>
-              <li><Link className="hover:text-primary transition-colors" href="/login">Log in</Link></li>
+              <li><Link className="hover:text-primary-dark transition-colors" href="/signup">Create an account</Link></li>
+              <li><Link className="hover:text-primary-dark transition-colors" href="/login">Log in</Link></li>
             </ul>
           </div>
         </div>

@@ -50,7 +50,7 @@ export default function DoctorFeedbackPanel({
         </div>
         <span
           className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-            status === 'REVIEWED' ? 'bg-primary/20 text-primary' : 'bg-amber-100 text-amber-700'
+            status === 'REVIEWED' ? 'bg-primary/20 text-primary-dark' : 'bg-amber-100 text-amber-700'
           }`}
         >
           {status === 'REVIEWED' ? 'Reviewed' : 'Pending review'}
@@ -94,7 +94,7 @@ export default function DoctorFeedbackPanel({
           <p className="text-stone-700 leading-relaxed whitespace-pre-wrap">{existingFeedback}</p>
           <button
             onClick={() => setEditing(true)}
-            className="mt-4 flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+            className="mt-4 flex items-center gap-1.5 text-sm font-bold text-primary-dark hover:underline"
           >
             <span className="material-symbols-outlined text-lg">edit</span>
             Edit feedback
