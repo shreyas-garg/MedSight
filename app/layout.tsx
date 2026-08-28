@@ -21,11 +21,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        {/* Applies the stored/system theme before first paint so the page never
-            flashes the wrong colours on load. */}
+        {/* Applies an explicitly chosen theme before first paint. Deliberately
+            does NOT follow the OS setting: the doctor/patient portal is not yet
+            styled for dark mode, so defaulting everyone to light is the only
+            consistent experience. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d)}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}})()`,
           }}
         />
         <link

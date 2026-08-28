@@ -26,6 +26,8 @@ yarn-error.log*
 
 # local env files
 .env*
+# ...but do ship the template (contains no real secrets)
+!.env.example
 
 # vercel
 .vercel
@@ -33,3 +35,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# database
+*.db
+*.db-journal
+
+# AI tool skill caches (auto-installed by `prisma init`)
+/.claude/
+/.windsurf/
+/.agents/
+/skills-lock.json
+
+# uploaded report files
+/storage/

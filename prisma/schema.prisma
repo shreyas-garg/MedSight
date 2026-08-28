@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         Role
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+
+  // Set only when role = PATIENT: the patient's assigned doctor.
+  doctorId String?
+  doctor   User?   @relation("DoctorPatients", fields: [doctorId], references: [id])
+  patients User[]  @relation("DoctorPatients")
+
+  reportsAsPatient Report[] @relation("PatientReports")
+  reportsAsDoctor  Report[] @relation("DoctorReports")
+
+  rehabTasksAsPatient RehabTask[] @relation("PatientRehabTasks")
+  rehabTasksAsDoctor  RehabTask[] @relation("DoctorRehabTasks")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  patientId    String
+  patient      User         @relation("PatientReports", fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId     String?
+  doctor       User?        @relation("DoctorReports", fields: [doctorId], references: [id])
+  fileName     String
+  fileSize     Int
+  // Set for reports uploaded after original-file storage was added.
+  mimeType     String?
+  storageKey   String?
+  analysisJson String
+  status       ReportStatus @default(PENDING)
+  feedback     String?
+  reviewedAt   DateTime?
+  createdAt    DateTime     @default(now())
+}
+
+model RehabTask {
+  id          String             @id @default(cuid())
+  patientId   String
+  patient     User               @relation("PatientRehabTasks", fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      User               @relation("DoctorRehabTasks", fields: [doctorId], references: [id])
+  title       String
+  description String?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  completions RehabCompletion[]
+}
+
+model RehabCompletion {
+  id          String    @id @default(cuid())
+  taskId      String
+  task        RehabTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  date        String // YYYY-MM-DD, one completion per task per calendar day
+  completedAt DateTime  @default(now())
+
+  @@unique([taskId, date])
+}

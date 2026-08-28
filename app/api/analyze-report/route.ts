@@ -1,13 +1,25 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/auth'
+import { saveReportFile, deleteReportFile, isSupportedMimeType } from '@/lib/storage'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user || user.role !== 'PATIENT') {
+      return NextResponse.json(
+        { error: 'You must be logged in as a patient to upload a report' },
+        { status: 401 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
-    
+
     if (!file) {
       return NextResponse.json(
         { error: 'No file provided' },
@@ -39,14 +51,23 @@ export async function POST(request: NextRequest) {
       else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) mimeType = 'image/jpeg'
     }
 
+    // Enforce the same limits as the upload form, since the client can be bypassed
+    if (!isSupportedMimeType(mimeType)) {
+      return NextResponse.json(
+        { error: 'Unsupported file type. Please upload a PDF or image (PNG, JPG, JPEG).' },
+        { status: 400 }
+      )
+    }
+    if (buffer.byteLength > MAX_FILE_BYTES) {
+      return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 })
+    }
+
     console.log('Processing file:', { name: file.name, type: mimeType, size: file.size })
 
-    // Models are tried in order. Google retires Gemini versions and closes older
-    // ones to new API keys, so keep a current model first and a floating alias last.
-    // Tried in order. Flash models first (these carry free-tier quota); the pro
-    // model last, because it has zero free-tier quota and only works on a project
-    // with billing enabled. Google also retires versions and closes older ones to
-    // new keys, so keep a floating alias in the list.
+    // Models are tried in order. Flash models first (these carry free-tier
+    // quota); the pro model last, since it has zero free-tier quota and only
+    // works on a project with billing enabled. Google retires versions and
+    // closes older ones to new keys, so keep a floating alias in the list.
     const MODEL_CHAIN = [
       'gemini-3.6-flash',
       'gemini-3.5-flash',
@@ -55,9 +76,9 @@ export async function POST(request: NextRequest) {
       'gemini-pro-latest',
     ]
 
-    // Build prompt: describe the OUTPUT SCHEMA only, never an example analysis.
-    // Filling the prompt with populated sample values makes the model echo them
-    // back instead of reading the attached report.
+    // The prompt describes only the OUTPUT SCHEMA. It must never contain filled-in
+    // example values: with a populated example the model echoes that sample back
+    // instead of reading the attached file.
     const prompt = `You are a medical assistant AI. Read ONLY the medical report in the attached file and summarise it for the patient in plain language.
 
 Return a single JSON object with exactly these keys:
@@ -76,6 +97,8 @@ Return a single JSON object with exactly these keys:
     {
       "testName": string,
       "result": string          - value with units, exactly as printed,
+      "value": number | null     - the numeric part of the result, or null if not numeric,
+      "unit": string             - the unit on its own (e.g. "g/dL"), or "" if none,
       "referenceRange": string   - as printed, or "Not stated",
       "status": "normal" | "low" | "high"
     }
@@ -89,6 +112,7 @@ Return a single JSON object with exactly these keys:
 
 Rules:
 - Use ONLY values that appear in the attached file. Never invent a name, date, test, value or reference range.
+- "value" and "unit" must be split out of the printed result so results can be tracked over time. If the result is not numeric, use null for "value" and "" for "unit".
 - If the file contains no medications, return an empty array. Do not suggest treatments the report does not mention.
 - If the file is unreadable or is not a medical report, return keyFindings with a single "warning" entry saying so, and empty testResults and medications.
 - Respond with the JSON object only. No markdown fences, no commentary.`
@@ -139,7 +163,7 @@ Rules:
       // If parsing fails, return sample data
       analysisData = {
         patientName: "Sample Patient",
-        reportDate: new Date().toLocaleDateString(),
+        reportDate: new Date().toLocaleDateString('en-US'),
         reportType: "Medical Report",
         keyFindings: [
           {
@@ -157,7 +181,8 @@ Rules:
       }
     }
 
-    // Normalise the shape so the UI can render it without defensive checks
+    // Normalise the shape so the UI never receives undefined arrays. Done before
+    // the DB write so stored rows are consistent too.
     const asArray = (v: any) => (Array.isArray(v) ? v : [])
     analysisData = {
       patientName: analysisData?.patientName || 'Not stated',
@@ -170,12 +195,41 @@ Rules:
       summary: analysisData?.summary || '',
     }
 
+    // Keep the original document so the doctor can check the AI against the source
+    const storageKey = await saveReportFile(buffer, mimeType)
+
+    let report
+    try {
+      report = await prisma.report.create({
+        data: {
+          patientId: user.id,
+          doctorId: user.doctorId,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType,
+          storageKey,
+          analysisJson: JSON.stringify(analysisData),
+        },
+      })
+    } catch (dbError) {
+      // Don't leave the file behind with no row pointing at it
+      await deleteReportFile(storageKey)
+      throw dbError
+    }
+
+    const doctor = user.doctorId
+      ? await prisma.user.findUnique({ where: { id: user.doctorId }, select: { name: true } })
+      : null
+
     // Return the analysis
     return NextResponse.json({
       success: true,
       fileName: file.name,
       fileSize: file.size,
-      analysis: analysisData
+      analysis: analysisData,
+      reportId: report.id,
+      reportStatus: report.status,
+      doctorName: doctor?.name ?? null,
     })
 
   } catch (error: any) {
@@ -194,7 +248,8 @@ Rules:
       errorMessage =
         'Every available model is out of quota. Free-tier limits reset daily; run `npm run check-api` for details.'
     } else if (error.message?.includes('model')) {
-      errorMessage = 'No available Gemini model could process this report. Your API key may not have access to the models listed in MODEL_CHAIN - check app/api/analyze-report/route.ts.'
+      errorMessage =
+        'No available Gemini model could process this report. Your API key may not have access to the models listed in MODEL_CHAIN - run `npm run check-api`.'
     }
     
     return NextResponse.json(
